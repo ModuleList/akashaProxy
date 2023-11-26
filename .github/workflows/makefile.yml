@@ -1,3 +1,22 @@
+Skip to content
+heinu123
+/
+akashaProxy
+
+Code
+Issues
+Pull requests
+Actions
+Projects
+Security
+Insights
+Settings
+Makefile CI
+ci: add upload to tg channel #8
+Jobs
+Run details
+Workflow file for this run
+.github/workflows/makefile.yml at e73641d
 name: Makefile CI
 
 on:
@@ -23,11 +42,27 @@ jobs:
       run: |
         make
         echo "status=success" >> $GITHUB_OUTPUT
-        echo "modulePath=akashaProxy-$(git rev-parse --short HEAD).zip" >> $GITHUB_OUTPUT
-
+        echo "buildSha=$(git rev-parse --short HEAD)" >> $GITHUB_OUTPUT
     - name: Upload Artefact
       uses: actions/upload-artifact@main
       if: steps.build.outputs.status == 'success' && !cancelled()
       with:
         name: module
-        path: ${{ steps.build.outputs.modulePath }}
+        path: akashaProxy-${{ steps.build.outputs.buildSha }}.zip
+
+    - name: Post to Telegram Channel
+      if: github.event_name != 'pull_request' && github.ref == 'refs/heads/master'
+      env:
+        CHANNEL_ID: ${{ secrets.TELEGRAM_TO }}
+        BOT_TOKEN: ${{ secrets.TELEGRAM_TOKEN }}
+        FILE: ${{ github.workspace }}/akashaProxy-${{ steps.build.outputs.buildSha }}.zip
+        COMMIT_MESSAGE: |+
+          **akashaProxy-${{ steps.build.outputs.buildSha }}**
+          ```
+          ${{ github.event.head_commit.message }}
+          ```by `${{ github.event.head_commit.author.name }}`
+          See commit detail [here](${{ github.event.head_commit.url }})
+      run: |
+        ESCAPED=`python3 -c 'import json,os,urllib.parse; print(urllib.parse.quote(json.dumps(os.environ["COMMIT_MESSAGE"])))'`
+        curl -v "https://api.telegram.org/bot${{ secrets.BOTTOKEN }}/sendMediaGroup?chat_id=${{ secrets.MESSAGEID }}&media=%5B%7B%22type%22:%22document%22,%20%22media%22:%22attach://release%22,%22parse_mode%22:%22MarkdownV2%22,%22caption%22:${ESCAPED}%7D%5D"  -F release="@$FILE"
+Editing akashaProxy/.github/workflows/makefile.yml at master · heinu123/akashaProxy 
