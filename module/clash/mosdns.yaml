@@ -1,0 +1,19 @@
+log:
+  level: info
+plugins:
+  # 转发至 Google 服务器的插件
+  - tag: forward_google
+    type: forward
+    args:
+      upstreams:
+        - addr: https://1.0.0.1/dns-query
+
+ # 在同一端口启动 udp 和 tcp 服务器。
+  - type: udp_server
+    args:
+      entry: forward_google
+      listen: 127.0.0.1:5533
+  - type: tcp_server
+    args:
+      entry: forward_google
+      listen: 127.0.0.1:5533
