@@ -23,10 +23,11 @@ jobs:
       run: |
         make
         echo "::set-output name=status::success"
+        echo "::set-output name=modulePath::akashaProxy-$(git rev-parse --short HEAD).zip"
 
     - name: Upload Artefact
       uses: actions/upload-artifact@main
       if: steps.build.outputs.status == 'success' && !cancelled()
       with:
         name: module
-        path: akashaProxy-$(shell git rev-parse --short HEAD).zip
+        path: ${{ steps.build.outputs.modulePath }}
