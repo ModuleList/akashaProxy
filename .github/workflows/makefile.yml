@@ -20,7 +20,9 @@ jobs:
 
     - name: Build Module
       id: build
-      run: make
+      run: |
+        make
+        echo "::set-output name=status::success"
 
     - name: Upload Artefact
       uses: actions/upload-artifact@main
