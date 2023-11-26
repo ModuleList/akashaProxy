@@ -1,22 +1,3 @@
-Skip to content
-heinu123
-/
-akashaProxy
-
-Code
-Issues
-Pull requests
-Actions
-Projects
-Security
-Insights
-Settings
-Makefile CI
-ci: add upload to tg channel #8
-Jobs
-Run details
-Workflow file for this run
-.github/workflows/makefile.yml at e73641d
 name: Makefile CI
 
 on:
