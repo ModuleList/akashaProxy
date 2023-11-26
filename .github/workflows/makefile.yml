@@ -22,8 +22,8 @@ jobs:
       id: build
       run: |
         make
-        echo "::set-output name=status::success"
-        echo "::set-output name=modulePath::akashaProxy-$(git rev-parse --short HEAD).zip"
+        echo "status=success" >> $GITHUB_OUTPUT
+        echo "modulePath=akashaProxy-$(git rev-parse --short HEAD).zip" >> $GITHUB_OUTPUT
 
     - name: Upload Artefact
       uses: actions/upload-artifact@main
