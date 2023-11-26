@@ -1,0 +1,69 @@
+# 看不懂为什么不去看文档？
+# 看不懂为什么不去看文档？
+# 看不懂为什么不去看文档？
+http-port: 7890
+socks-port: 7891
+redir-port: 7892
+tproxy-port: 7893
+allow-lan: true
+geodata-mode: true
+unified-delay: true
+mode: rule
+log-level: info
+ipv6: true
+tcp-concurrent: true
+geox-url:
+  geoip: "https://gcore.jsdelivr.net/gh/Loyalsoldier/geoip@release/geoip.dat"
+  geosite: "https://gcore.jsdelivr.net/gh/Loyalsoldier/v2ray-rules-dat@release/geosite.dat"
+  mmdb: "https://gcore.jsdelivr.net/gh/Loyalsoldier/geoip@release/Country.mmdb"
+find-process-mode: strict
+global-client-fingerprint: chrome
+
+sniffer:
+  enable: true
+  sniffing:
+    - tls
+    - http
+
+profile:
+  store-fake-ip: true
+  store-selected: true
+
+external-controller: 127.0.0.1:9090
+external-ui: yacd
+
+tun:
+  enable: false
+  device: Meta
+  stack: system #system or gvisor
+  dns-hijack:
+    - any:53
+  auto-route: true
+  auto-detect-interface: true
+
+# 开启adguard home使用这一套dns配置 1053端口为你adguardhome端口
+# dns:
+  # enable: true
+  # listen: 0.0.0.0:1053
+  # ipv6: true
+  # default-nameserver:
+   # - 127.0.0.1:1053
+  # nameserver:
+   # - 127.0.0.1:1053
+
+dns:
+  enable: true
+  listen: 0.0.0.0:53
+  ipv6: true
+  nameserver-policy:
+    "geosite:cn,geoip:cn,private":
+      - https://doh.pub/dns-query
+      - https://dns.alidns.com/dns-query
+  nameserver:
+    - tls://8.8.4.4
+    - https://1.0.0.1/dns-query
+
+
+# 看不懂为什么不去看文档？
+# 看不懂为什么不去看文档？
+# 看不懂为什么不去看文档？

@@ -1,0 +1,460 @@
+#!/system/bin/sh
+
+scripts=`realpath $0`
+scripts_dir=`dirname ${scripts}`
+. /data/clash/clash.config
+rm -rf ${CFM_logs_file}
+
+update_package() {
+    file=${filter_packages_file}
+    old_size=$(wc -c < "$file")
+    while true
+    do
+        new_size=$(wc -c < "$file")
+        if [[ $new_size > $old_size ]]; then 
+            new_text=$(${busybox_path} comm $file ${Clash_run_path}/packages.list -2 -3)
+            log "info: 文件 $file 被写入 更新iptables规则中..."
+            for package in $new_text; do
+                if [ "${Clash_enhanced_mode}" == "fake-ip" ] && [ "${Clash_tun_status}" != "true" ]; then
+                    log "war: Tproxy_fake-ip下禁用黑白名单."
+                    exit 1
+                fi
+                nhd=$(awk -F ">" '/^[0-9]+>$/{print $1}' <<< "${package}")
+                if [ "${nhd}" != "" ]; then
+                    hd=${nhd}
+                    continue
+                fi
+                uid=$(awk '$1~/'^"${package}"$'/{print $2}' ${system_packages_file})
+                if [ "${uid}" == "" ]; then
+                    log "warn: ${package}未找到."
+                    continue
+                fi
+                for uids in ${hd}${uid}; do
+                    if [ "${Clash_enhanced_mode}" == "fake-ip" ]; then
+                        mode="blacklist"
+                    fi
+                    if [ "${mode}" == "global" ]; then
+                        apps=""
+                        mode="blacklist"
+                    else
+                        apps=${uids}
+                    fi
+                    if [ "${mode}" = "blacklist" ] ; then
+                        for appuid in  ${apps} ; do
+                            ${iptables_wait} -t mangle -A FILTER_OUT_CLASH -m owner --uid-owner ${appuid} -j ACCEPT
+                        done
+                
+                        ${iptables_wait} -t mangle -A FILTER_OUT_CLASH -m owner ! --gid-owner ${Clash_group} -j CLASH_OUT
+                    elif [ "${mode}" = "whitelist" ] ; then
+                        for appuid in  ${apps} ; do
+                            ${iptables_wait} -t mangle -A FILTER_OUT_CLASH -m owner --uid-owner ${appuid} -j CLASH_OUT
+                         done
+                    fi
+                
+                    if [ "${ipv6}" = "true" ] ; then
+                        for subnet6 in ${reserved_ip6[*]} ; do
+                            ${ip6tables_wait} -t mangle -A FILTER_OUT_CLASH -d ${subnet6} -j ACCEPT
+                        done
+                
+                        if [ "${mode}" = "blacklist" ] ; then
+                           for appuid in  ${apps} ; do
+                                ${ip6tables_wait} -t mangle -A FILTER_OUT_CLASH -m owner --uid-owner ${appuid} -j ACCEPT
+                            done
+                
+                           ${ip6tables_wait} -t mangle -A FILTER_OUT_CLASH -m owner ! --gid-owner ${Clash_group} -j CLASH_OUT
+                        elif [ "${mode}" = "whitelist" ] ; then
+                            for appuid in  ${apps} ; do
+                                ${ip6tables_wait} -t mangle -A FILTER_OUT_CLASH -m owner --uid-owner ${appuid} -j CLASH_OUT
+                            done
+                        fi
+                    fi
+                done
+                if [ "${mode}" = "blacklist" ]; then
+                    log "info: ${hd}${package}已过滤."
+                elif [ "${mode}" = "whitelist" ]; then
+                    log "info: ${hd}${package}已代理."
+                fi
+            done
+            old_size=${new_size}
+            cp -Rf $file ${Clash_run_path}/packages.list
+        elif [[ $new_size < $old_size ]]; then
+            new_text=$(${busybox_path} comm $file ${Clash_run_path}/packages.list -1 -3)
+            log "info: 文件 $file 被修改 更新iptables规则中..."
+            for package in $new_text; do
+                if [ "${Clash_enhanced_mode}" == "fake-ip" ] && [ "${Clash_tun_status}" != "true" ]; then
+                    log "war: Tproxy_fake-ip下禁用黑白名单."
+                    exit 1
+                fi
+                nhd=$(awk -F ">" '/^[0-9]+>$/{print $1}' <<< "${package}")
+                if [ "${nhd}" != "" ]; then
+                    hd=${nhd}
+                    continue
+                fi
+                uid=$(awk '$1~/'^"${package}"$'/{print $2}' ${system_packages_file})
+                if [ "${uid}" == "" ]; then
+                    log "warn: ${package}未找到."
+                    continue
+                fi
+                for uids in ${hd}${uid}; do
+                    if [ "${Clash_enhanced_mode}" == "fake-ip" ]; then
+                        mode="blacklist"
+                    fi
+                    if [ "${mode}" == "global" ]; then
+                        apps=""
+                        mode="blacklist"
+                    else
+                        apps=${uids}
+                    fi
+                    if [ "${mode}" = "blacklist" ] ; then
+                        for appuid in  ${apps} ; do
+                            ${iptables_wait} -t mangle -D FILTER_OUT_CLASH -m owner --uid-owner ${appuid} -j ACCEPT
+                        done
+                
+                        ${iptables_wait} -t mangle -D FILTER_OUT_CLASH -m owner ! --gid-owner ${Clash_group} -j CLASH_OUT
+                    elif [ "${mode}" = "whitelist" ] ; then
+                        for appuid in  ${apps} ; do
+                            ${iptables_wait} -t mangle -D FILTER_OUT_CLASH -m owner --uid-owner ${appuid} -j CLASH_OUT
+                         done
+                    fi
+                
+                    if [ "${ipv6}" = "true" ] ; then
+                        for subnet6 in ${reserved_ip6[*]} ; do
+                            ${ip6tables_wait} -t mangle -D FILTER_OUT_CLASH -d ${subnet6} -j ACCEPT
+                        done
+                
+                        if [ "${mode}" = "blacklist" ] ; then
+                           for appuid in  ${apps} ; do
+                                ${ip6tables_wait} -t mangle -D FILTER_OUT_CLASH -m owner --uid-owner ${appuid} -j ACCEPT
+                            done
+                
+                           ${ip6tables_wait} -t mangle -D FILTER_OUT_CLASH -m owner ! --gid-owner ${Clash_group} -j CLASH_OUT
+                        elif [ "${mode}" = "whitelist" ] ; then
+                            for appuid in  ${apps} ; do
+                                ${ip6tables_wait} -t mangle -D FILTER_OUT_CLASH -m owner --uid-owner ${appuid} -j CLASH_OUT
+                            done
+                        fi
+                    fi
+                done
+                if [ "${mode}" = "blacklist" ]; then
+                    log "info: ${hd}${package}已移除过滤."
+                elif [ "${mode}" = "whitelist" ]; then
+                    log "info: ${hd}${package}已移除代理."
+                fi
+            done
+            old_size=${new_size}
+            cp -Rf $file ${Clash_run_path}/packages.list
+        fi
+        sleep ${sleeptime}
+    done
+}
+
+updateFile() {
+    file="$1"
+    file_bk="${file}.bk"
+    update_url="$2"
+
+    mv -f ${file} ${file_bk}
+    curl -sL ${update_url} -o ${file}
+
+
+    if [ -f "${file}" ]; then
+        rm -rf ${file_bk}
+
+        log "info: ${file}更新成功."
+    else
+        mv ${file_bk} ${file}
+        log "war: ${file}更新失败,文件已恢复.."
+        return 1
+    fi
+}
+
+updateclash() {
+    update=0
+    stringversion=`curl --connect-timeout 5 -H 'Host:api.github.com' -sL -k "https://20.205.243.168/repos/MetaCubeX/Clash.Meta/releases/latest" | grep "tag_name" | head -n 1 | awk -F ":" '{print $2}' | sed 's/\"//g;s/,//g;s/ //g' | sed 's/v//g'`
+    version=`echo "${stringversion}" | sed 's/\.//g'`
+    if [[ "${version}" == "" ]];then
+        log "info: 网络连接失败"
+        return
+    fi
+    if [ -f ${Clash_bin_path} ];then
+        localversion=`eval ${Clash_bin_path} -v | sed 's/Clash Meta //g' | sed 's/ android.*//g'`
+        ifalpha=`echo "${localversion}" | grep "alpha"`
+        localversion=`echo "${localversion}" | sed 's/\.//g' | sed 's/v//g'| sed 's/Use tags: with_gisor//g'`
+    else
+        localversion="0"
+        ifalpha=""
+    fi
+    if [[ "${ifalpha}" != "" ]];then
+        log "info: 检测到最新版"
+        update=1
+    else
+        if [[ "${version}" -gt "${localversion}" ]];then
+            log "info: 检测到最新版"
+            update=1
+        fi
+    fi
+    if [ ${update} == 1 ];then
+        log "info: 下载更新包中 更新速度取决于你的网速..."
+        mkdir /data/clash/clashkernel/temp
+        if [ "${cgo}" == "true" ];then
+            curl --connect-timeout 5 -sL -o /data/clash/clashkernel/temp/clashMeta.gz "https://ghproxy.com/https://github.com/MetaCubeX/Clash.Meta/releases/latest/download/clash.meta-android-arm64-cgo-v"${stringversion}".gz"
+        else
+            curl --connect-timeout 5 -sL -o /data/clash/clashkernel/temp/clashMeta.gz "https://ghproxy.com/https://github.com/MetaCubeX/Clash.Meta/releases/latest/download/clash.meta-android-arm64-v"${stringversion}".gz"
+        fi
+        if [ -f /data/clash/clashkernel/temp/clashMeta.gz ];then
+            ${busybox_path} gunzip -f /data/clash/clashkernel/temp/clashMeta.gz
+            mv -f /data/clash/clashkernel/temp/clashMeta /data/clash/clashkernel/clashMeta
+            rm -rf /data/clash/clashkernel/temp
+            chmod +x /data/clash/clashkernel/clashMeta
+            log "info: 更新完成"
+        else
+            log "err: 更新失败，请自行前往github项目地址下载→ https://github.com/MetaCubeX/Clash.Meta/releases/latest"
+            log "err: 下载带有android-arm64字样的gz压缩包，解压后放置在clashkernel目录下"
+            exit 1
+        fi
+    else
+        log "info: 当前为最新版"
+    fi
+}
+
+
+
+
+start_clash() {
+    mkfir -p ${Clash_run_path}
+    if [ ${adguard} == "true" ];then
+        if [ ! -f "${Adguard_bin_path}" ];then
+            log "err: 已开启adguard拓展 home但未刷入过adguard扩展包!"
+            exit 1
+        fi
+    fi
+    if [ ${mosdns} == "true" ];then
+        if [ ! -f "${Mosdns_bin_path}" ];then
+            log "err: 已开启mosdns拓展 但未刷入过mosdns扩展包!"
+            exit 1
+        fi
+    fi
+    if [ "${ipv6}" = "false" ] ; then
+        for net in /proc/sys/net/ipv6/conf/{wlan*,*data*} ; do
+            echo ${net} | grep -q wlan
+            if [ $? -eq 0 ] ; then
+                echo 0 > ${net}/accept_ra
+            fi
+            echo 1 > ${net}/disable_ipv6
+        done
+    else
+        for net in /proc/sys/net/ipv6/conf/{wlan*,*data*} ; do
+            echo ${net} | grep -q wlan
+            if [ $? -eq 0 ] ; then
+                echo 1 > ${net}/accept_ra
+            fi
+            echo 0 > ${net}/disable_ipv6
+        done
+    fi
+
+    pid=`cat ${Clash_pid_file} 2> /dev/null`
+    if (cat /proc/${pid}/cmdline | grep -q clash) ; then
+        log "info: 检测到clash已启动,此次不启动."
+        exit 1
+    fi
+
+    if [ "${Clash_tproxy_port}" == 0 ] || [ "${Clash_tproxy_port}" == ""  ]; then
+        if [ "${Clash_tun_status}" != "true" ]; then
+            log "err: tproxy和tun得二选一."
+            exit 1
+        fi
+    fi
+    
+    if [ -f "${Clash_bin_path}" ] ; then
+        mkdir -p ${Clash_run_path}
+        chown ${Clash_user_group} ${Clash_bin_path}
+        chmod ${Clash_permissions} ${Clash_bin_path}
+        chown ${Clash_user_group} ${Adguard_bin_path}
+        chmod ${Clash_permissions} ${Adguard_bin_path}
+        chown ${Clash_user_group} ${Mosdns_bin_path}
+        chmod ${Clash_permissions} ${Mosdns_bin_path}
+        chown ${Clash_user_group} ${temporary_config_file}
+        chmod 0644 ${temporary_config_file}
+        rm -rf ${Clash_run_path}/root
+        touch ${Clash_run_path}/root
+        chmod 777 ${Clash_run_path}/root
+
+        if [ "${auto_updateGeoSite}" == "true" ]; then
+            echo "${update_geoXInterval} ${scripts_dir}/clash.tool -u" >> ${Clash_run_path}/root \
+            && log "info: 自动更新GeoX定时已开启."
+        fi
+
+        if [ "${auto_updateSubcript}" == "true" ]; then
+            echo "${update_subcriptInterval} ${scripts_dir}/clash.tool -s" >> ${Clash_run_path}/root \
+            && log "info: 自动更新订阅定时已开启."
+        fi
+        if [ "${auto_updateclashMeta}" == "true" ]; then
+            log "info: 自动更新clashMeta内核定时已开启."
+        fi
+
+        sed -i '/^[  ]*$/d' ${CFM_logs_file}
+        if [ "${filter_local}" = "true" ] ; then
+            com="${scripts_dir}/clash.tool -m ; sleep 10 ;${scripts_dir}/clash.tool -m ; sleep 10; ${scripts_dir}/clash.tool -m ;sleep 10; ${scripts_dir}/clash.tool -m;sleep 10;${scripts_dir}/clash.tool -m ; sleep 10;${scripts_dir}/clash.tool -m"
+            echo "*/1 * * * * ${com}" >> ${Clash_run_path}/root && log "info: 自动绕过本地ip段已打开."
+        fi
+    else
+        if [ ${Clash_bin_name} == "clashMeta" ];then
+            log "err: ${Clash_bin_name}内核丢失. 正在更新.."
+            updateclash
+        else
+            log "err: ${Clash_bin_name}内核丢失."
+        fi
+        
+        
+        exit 1
+    fi
+    if [ ! -f ${Clash_config_file} ];then
+        log "err: 缺少config.yaml 订阅(节点)配置文件."
+        exit 1
+    fi
+    if [ ! -f ${template_file} ];then
+        log "err: 缺少clash.yaml clash配置文件."
+        exit 1
+    fi
+
+    if [ ${ml} == "true" ];then
+        if [ ! -f ${Clash_run_path}/ip.dat ];then
+            log "info: 正在获取免流ip..."
+            baidumlip=$(${busybox_path} ping -c 1 cloudnproxy.baidu.com | sed '1{s/[^(]*(//;s/).*//;q}')
+            txmlip=$(${busybox_path} ping -c 1 weixin.qq.com | sed '1{s/[^(]*(//;s/).*//;q}')
+            echo "baidumlip=${baidumlip}\ntxmlip=${txmlip}">${Clash_run_path}/ip.dat
+        else
+            log "info: 已从缓存文件中获取免流ip"
+            . ${Clash_run_path}/ip.dat
+        fi
+    fi
+    if [ ${proxyGoogle} == "true" ];then
+        if [ ! -f ${Clash_run_path}/Google.dat ];then
+            log "info: 正在获取本机所有Google系app..."
+            echo "\n">${Clash_run_path}/Google.dat
+            for packages in $(pm list packages |awk -F : '{print$NF}')$(pm list packages -s |awk -F : '{print$NF}')
+            do
+                echo $packages | grep "google">>${Clash_run_path}/Google.dat
+                echo $packages | grep "com.android.vending">>${Clash_run_path}/Google.dat
+            done
+        else
+            log "info: 已从缓存文件中获取本机所有Google系app"
+        fi
+    fi
+    if [ ${ml} == "true" ];then    
+        log "info: 当前百度系免流ip:${baidumlip}"
+        log "info: 当前腾讯系免流ip:${txmlip}"
+    fi
+    cp -f ${template_file} ${temporary_config_file}.swp && echo "\n" >> ${temporary_config_file}.swp
+    sed -n -E '/^proxies:.*$/,$p' ${Clash_config_file} >> ${temporary_config_file}.swp
+    echo "\n" >> ${temporary_config_file}.swp
+    sed -i '/^[  ]*$/d' ${temporary_config_file}.swp
+    mv -f ${temporary_config_file}.swp ${temporary_config_file}
+    if [ ${ml} == "true" ];then
+        sed -i "s/百度系免流ip/${baidumlip}/g" ${temporary_config_file}
+        sed -i "s/腾讯系免流ip/${txmlip}/g" ${temporary_config_file}
+    fi
+    if [ ! -f ${Clash_GeoIP_file} ];then
+        log "err: 缺少GeoIP资源文件 正在自动下载."
+        updateFile ${Clash_GeoIP_file} ${GeoIP_url}
+    fi
+    if [ ! -f ${Clash_GeoSite_file} ];then
+        log "err: 缺少GeoSite资源文件 正在自动下载."
+        updateFile ${Clash_GeoSite_file} ${GeoSite_url}
+    fi
+    clasherror=$( ${busybox_path} setuidgid ${Clash_user_group} ${Clash_bin_path} -d ${Clash_data_dir} -f ${temporary_config_file} -t | grep error | sed 's/"//g' | awk -F 'msg=' '{print $2}')
+    if [ -f ${temporary_config_file} ]; then
+        if $(${Clash_bin_path} -d ${Clash_data_dir} -t -f ${temporary_config_file} > /dev/null) ; then
+            if [ "${Clash_tun_status}" == "true" ]; then
+                mkdir -p /dev/net
+                ln -sf /dev/tun /dev/net/tun
+            fi
+            mv /data/clash/run/kernel.log /data/clash/run/kernel.old.log
+            ulimit -SHn 1000000
+            if [ ${adguard} == "true" ];then
+                nohup ${busybox_path} setuidgid ${Clash_user_group} ${Adguard_bin_path} -w ${Clash_run_path} -c ${Adguard_config_file} --pidfile ${Adguard_pid_file} -l /data/clash/run/adg.log 2>&1 &
+            fi
+            if [ ${mosdns} == "true" ];then
+                nohup ${busybox_path} setuidgid ${Clash_user_group} ${Mosdns_bin_path} -d ${Clash_data_dir} -c ${Mosdns_config_file} 2>&1 &
+                echo "$(${busybox_path} pidof ${Mosdns_bin_path})">${Mosdns_pid_file}
+            fi
+            nohup ${busybox_path} setuidgid ${Clash_user_group} ${Clash_bin_path} -d ${Clash_data_dir} -f ${temporary_config_file} > /data/clash/run/kernel.log 2>&1 &
+            if [ ${update_packagelist} == "true" ];then
+                update_package &
+                echo -n $! > ${ClashScript_pid_file}
+            fi
+            echo "$(${busybox_path} pidof ${Clash_bin_path})">${Clash_pid_file}
+            cp -Rf /data/clash/* /data/clash.old/
+            log "info: 代理模式:${mode}"
+            if [ ${adguard} == "true" ];then
+                log "info: adguard home已启动"
+            fi
+            log "info: ${Clash_bin_name}内核已启动."
+        else
+            log "err: 配置有误，启动失败."
+            log "err: 下面是错误日志"
+            log "err: ${clasherror}"
+            exit 1
+        fi
+    else
+        log "info: 配置文件合并失败."
+        exit 1
+    fi
+
+
+    if [ "${Clash_tun_status}" == "true" ]; then
+        return
+    fi
+    if [ "${Clash_port_skipdetection}" == "false" ]; then
+        sleep ${WaitClashStartTime}
+        if ! (${scripts_dir}/clash.tool -p) ; then
+            kill -15 `cat ${Clash_pid_file}`
+            log "err: 端口未检测到,已停止${Clash_bin_name}内核以及后续逻辑."
+            if [ ${adguard} == "true" ];then
+                kill -15 `cat ${Adguard_pid_file}`
+                log "err: 已停止adguard home内核."
+            fi
+            if [ ${mosdns} == "true" ];then
+                kill -15 `cat ${Mosdns_pid_file}`
+                log "err: 已停止mosdns内核."
+            fi
+            if [ ${update_packagelist} == "true" ];then
+                kill -15 `cat ${ClashScript_pid_file}`
+            fi
+            rm -rf ${Clash_pid_file}
+            exit 1
+        fi
+    else
+    log "info: 已跳过端口检查."
+    fi
+}
+
+stop_clash() {
+    kill -15 `cat ${Clash_pid_file}`
+    log "info: 已停止${Clash_bin_name}内核."
+    if [ ${adguard} == "true" ];then
+        kill -15 `cat ${Adguard_pid_file}`
+        log "info: 已停止adguard home内核."
+    fi
+    if [ ${mosdns} == "true" ];then
+        kill -15 `cat ${Mosdns_pid_file}`
+        log "info: 已停止mosdns内核."
+    fi
+    if [ ${update_packagelist} == "true" ];then
+        kill -15 `cat ${ClashScript_pid_file}`
+    fi
+}
+
+while getopts ":sk" signal ; do
+    case ${signal} in
+        s)
+            start_clash
+            ;;
+        k)
+            stop_clash
+            ;;
+        ?)
+            echo ""
+            ;;
+    esac
+done

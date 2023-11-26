@@ -1,0 +1,13 @@
+[submodule "module/clash/yacd"]
+	path = module/clash/yacd
+	url = https://github.com/MetaCubeX/Yacd-meta
+[submodule "Clash.Meta"]
+	path = Clash.Meta
+	url = https://github.com/MetaCubeX/Clash.Meta
+	branch = Meta
+[submodule "plugin/AdGuardHome"]
+	path = plugin/AdGuardHome
+	url = https://github.com/AdguardTeam/AdGuardHome
+[submodule "plugin/mosdns"]
+	path = plugin/mosdns
+	url = https://github.com/IrineSistiana/mosdns
