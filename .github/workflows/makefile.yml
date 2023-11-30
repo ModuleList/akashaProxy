@@ -43,7 +43,7 @@ jobs:
         BOT_TOKEN: ${{ secrets.TELEGRAM_TOKEN }}
         FILE: ${{ env.ZIP_FILE }}
         COMMIT_MESSAGE: |+
-          **New push to github!**
+          **New push to github\!**
           
           ```
           ${{ github.event.head_commit.message }}
