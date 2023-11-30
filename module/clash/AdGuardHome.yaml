@@ -98,6 +98,18 @@ filters:
     url: https://adguardteam.github.io/AdGuardSDNSFilter/Filters/filter.txt
     name: AdGuard DNS filter
     id: 1
+  - enabled: true
+    url: https://raw.githubusercontent.com/TG-Twilight/AWAvenue-Adblock-Rule/main/AWAvenue-Adblock-Rule.txt
+    name: 秋风去广告
+    id: 1696664489
+  - enabled: true
+    url: https://easylist-downloads.adblockplus.org/easyprivacy.txt
+    name: EasyPrivacy
+    id: 1699261080
+  - enabled: true
+    url: https://easylist-downloads.adblockplus.org/easylistchina.txt
+    name: EasyList China
+    id: 1699261081
 whitelist_filters: []
 user_rules: []
 dhcp:
