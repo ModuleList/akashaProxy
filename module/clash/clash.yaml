@@ -38,13 +38,13 @@ tun:
   stack: system #system or gvisor
   dns-hijack:
     - any:53
-  auto-route: true
-  auto-detect-interface: true
+  # auto-route: true
+  # auto-detect-interface: true
 
 # 开启adguard home使用这一套dns配置 1053端口为你adguardhome端口
 # dns:
   # enable: true
-  # listen: 0.0.0.0:1053
+  # listen: 127.0.0.1:53
   # ipv6: true
   # default-nameserver:
    # - 127.0.0.1:1053
@@ -53,8 +53,7 @@ tun:
 
 dns:
   enable: true
-  listen: 0.0.0.0:53
-  ipv6: true
+  listen: 127.0.0.1:53
   nameserver-policy:
     "geosite:cn,geoip:cn,private":
       - https://doh.pub/dns-query
