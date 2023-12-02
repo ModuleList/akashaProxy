@@ -5,148 +5,6 @@ scripts_dir=`dirname ${scripts}`
 . /data/clash/clash.config
 rm -rf ${CFM_logs_file}
 
-update_package() {
-    file=${filter_packages_file}
-    old_size=$(wc -c < "$file")
-    while true
-    do
-        new_size=$(wc -c < "$file")
-        if [[ $new_size > $old_size ]]; then 
-            new_text=$(${busybox_path} comm $file ${Clash_run_path}/packages.list -2 -3)
-            log "info: 文件 $file 被写入 更新iptables规则中..."
-            for package in $new_text; do
-                if [ "${Clash_enhanced_mode}" == "fake-ip" ] && [ "${Clash_tun_status}" != "true" ]; then
-                    log "war: Tproxy_fake-ip下禁用黑白名单."
-                    exit 1
-                fi
-                nhd=$(awk -F ">" '/^[0-9]+>$/{print $1}' <<< "${package}")
-                if [ "${nhd}" != "" ]; then
-                    hd=${nhd}
-                    continue
-                fi
-                uid=$(awk '$1~/'^"${package}"$'/{print $2}' ${system_packages_file})
-                if [ "${uid}" == "" ]; then
-                    log "warn: ${package}未找到."
-                    continue
-                fi
-                for uids in ${hd}${uid}; do
-                    if [ "${Clash_enhanced_mode}" == "fake-ip" ]; then
-                        mode="blacklist"
-                    fi
-                    if [ "${mode}" == "global" ]; then
-                        apps=""
-                        mode="blacklist"
-                    else
-                        apps=${uids}
-                    fi
-                    if [ "${mode}" = "blacklist" ] ; then
-                        for appuid in  ${apps} ; do
-                            ${iptables_wait} -t mangle -A FILTER_OUT_CLASH -m owner --uid-owner ${appuid} -j ACCEPT
-                        done
-                
-                        ${iptables_wait} -t mangle -A FILTER_OUT_CLASH -m owner ! --gid-owner ${Clash_group} -j CLASH_OUT
-                    elif [ "${mode}" = "whitelist" ] ; then
-                        for appuid in  ${apps} ; do
-                            ${iptables_wait} -t mangle -A FILTER_OUT_CLASH -m owner --uid-owner ${appuid} -j CLASH_OUT
-                         done
-                    fi
-                
-                    if [ "${ipv6}" = "true" ] ; then
-                        for subnet6 in ${reserved_ip6[*]} ; do
-                            ${ip6tables_wait} -t mangle -A FILTER_OUT_CLASH -d ${subnet6} -j ACCEPT
-                        done
-                
-                        if [ "${mode}" = "blacklist" ] ; then
-                           for appuid in  ${apps} ; do
-                                ${ip6tables_wait} -t mangle -A FILTER_OUT_CLASH -m owner --uid-owner ${appuid} -j ACCEPT
-                            done
-                
-                           ${ip6tables_wait} -t mangle -A FILTER_OUT_CLASH -m owner ! --gid-owner ${Clash_group} -j CLASH_OUT
-                        elif [ "${mode}" = "whitelist" ] ; then
-                            for appuid in  ${apps} ; do
-                                ${ip6tables_wait} -t mangle -A FILTER_OUT_CLASH -m owner --uid-owner ${appuid} -j CLASH_OUT
-                            done
-                        fi
-                    fi
-                done
-                if [ "${mode}" = "blacklist" ]; then
-                    log "info: ${hd}${package}已过滤."
-                elif [ "${mode}" = "whitelist" ]; then
-                    log "info: ${hd}${package}已代理."
-                fi
-            done
-            old_size=${new_size}
-            cp -Rf $file ${Clash_run_path}/packages.list
-        elif [[ $new_size < $old_size ]]; then
-            new_text=$(${busybox_path} comm $file ${Clash_run_path}/packages.list -1 -3)
-            log "info: 文件 $file 被修改 更新iptables规则中..."
-            for package in $new_text; do
-                if [ "${Clash_enhanced_mode}" == "fake-ip" ] && [ "${Clash_tun_status}" != "true" ]; then
-                    log "war: Tproxy_fake-ip下禁用黑白名单."
-                    exit 1
-                fi
-                nhd=$(awk -F ">" '/^[0-9]+>$/{print $1}' <<< "${package}")
-                if [ "${nhd}" != "" ]; then
-                    hd=${nhd}
-                    continue
-                fi
-                uid=$(awk '$1~/'^"${package}"$'/{print $2}' ${system_packages_file})
-                if [ "${uid}" == "" ]; then
-                    log "warn: ${package}未找到."
-                    continue
-                fi
-                for uids in ${hd}${uid}; do
-                    if [ "${Clash_enhanced_mode}" == "fake-ip" ]; then
-                        mode="blacklist"
-                    fi
-                    if [ "${mode}" == "global" ]; then
-                        apps=""
-                        mode="blacklist"
-                    else
-                        apps=${uids}
-                    fi
-                    if [ "${mode}" = "blacklist" ] ; then
-                        for appuid in  ${apps} ; do
-                            ${iptables_wait} -t mangle -D FILTER_OUT_CLASH -m owner --uid-owner ${appuid} -j ACCEPT
-                        done
-                
-                        ${iptables_wait} -t mangle -D FILTER_OUT_CLASH -m owner ! --gid-owner ${Clash_group} -j CLASH_OUT
-                    elif [ "${mode}" = "whitelist" ] ; then
-                        for appuid in  ${apps} ; do
-                            ${iptables_wait} -t mangle -D FILTER_OUT_CLASH -m owner --uid-owner ${appuid} -j CLASH_OUT
-                         done
-                    fi
-                
-                    if [ "${ipv6}" = "true" ] ; then
-                        for subnet6 in ${reserved_ip6[*]} ; do
-                            ${ip6tables_wait} -t mangle -D FILTER_OUT_CLASH -d ${subnet6} -j ACCEPT
-                        done
-                
-                        if [ "${mode}" = "blacklist" ] ; then
-                           for appuid in  ${apps} ; do
-                                ${ip6tables_wait} -t mangle -D FILTER_OUT_CLASH -m owner --uid-owner ${appuid} -j ACCEPT
-                            done
-                
-                           ${ip6tables_wait} -t mangle -D FILTER_OUT_CLASH -m owner ! --gid-owner ${Clash_group} -j CLASH_OUT
-                        elif [ "${mode}" = "whitelist" ] ; then
-                            for appuid in  ${apps} ; do
-                                ${ip6tables_wait} -t mangle -D FILTER_OUT_CLASH -m owner --uid-owner ${appuid} -j CLASH_OUT
-                            done
-                        fi
-                    fi
-                done
-                if [ "${mode}" = "blacklist" ]; then
-                    log "info: ${hd}${package}已移除过滤."
-                elif [ "${mode}" = "whitelist" ]; then
-                    log "info: ${hd}${package}已移除代理."
-                fi
-            done
-            old_size=${new_size}
-            cp -Rf $file ${Clash_run_path}/packages.list
-        fi
-        sleep ${sleeptime}
-    done
-}
 
 updateFile() {
     file="$1"
@@ -376,10 +234,6 @@ start_clash() {
                 echo "$(${busybox_path} pidof ${Mosdns_bin_path})">${Mosdns_pid_file}
             fi
             nohup ${busybox_path} setuidgid ${Clash_user_group} ${Clash_bin_path} -d ${Clash_data_dir} -f ${temporary_config_file} > /data/clash/run/kernel.log 2>&1 &
-            if [ ${update_packagelist} == "true" ];then
-                update_package &
-                echo -n $! > ${ClashScript_pid_file}
-            fi
             echo "$(${busybox_path} pidof ${Clash_bin_path})">${Clash_pid_file}
             cp -Rf /data/clash/* /data/clash.old/
             log "info: 代理模式:${mode}"
@@ -415,9 +269,6 @@ start_clash() {
                 kill -15 `cat ${Mosdns_pid_file}`
                 log "err: 已停止mosdns内核."
             fi
-            if [ ${update_packagelist} == "true" ];then
-                kill -15 `cat ${ClashScript_pid_file}`
-            fi
             rm -rf ${Clash_pid_file}
             exit 1
         fi
@@ -436,9 +287,6 @@ stop_clash() {
     if [ ${mosdns} == "true" ];then
         kill -15 `cat ${Mosdns_pid_file}`
         log "info: 已停止mosdns内核."
-    fi
-    if [ ${update_packagelist} == "true" ];then
-        kill -15 `cat ${ClashScript_pid_file}`
     fi
 }
 
