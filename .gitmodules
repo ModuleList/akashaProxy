@@ -1,10 +1,11 @@
 [submodule "module/clash/yacd"]
 	path = module/clash/yacd
 	url = https://github.com/MetaCubeX/Yacd-meta
+	branch = gh-pages
 [submodule "Clash.Meta"]
 	path = Clash.Meta
-	url = https://github.com/MetaCubeX/Clash.Meta
-	branch = Meta
+	url = https://github.com/MetaCubeX/mihomo
+	branch = Alpha
 [submodule "plugin/AdGuardHome"]
 	path = plugin/AdGuardHome
 	url = https://github.com/AdguardTeam/AdGuardHome
