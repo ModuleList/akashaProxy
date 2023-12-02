@@ -95,8 +95,9 @@ keep_dns() {
 
 updateclash() {
     update=0
-    stringversion=`curl --connect-timeout 5 -H 'Host:api.github.com' -sL -k "https://20.205.243.168/repos/MetaCubeX/Clash.Meta/releases/latest" | grep "tag_name" | head -n 1 | awk -F ":" '{print $2}' | sed 's/\"//g;s/,//g;s/ //g' | sed 's/v//g'`
+    stringversion=`curl --connect-timeout 5 -H 'Host:api.github.com' -sL -k "https://20.205.243.168/repos/MetaCubeX/mihomo/releases/latest" | grep "tag_name" | head -n 1 | awk -F ":" '{print $2}' | sed 's/\"//g;s/,//g;s/ //g' | sed 's/v//g'`
     version=`echo "${stringversion}" | sed 's/\.//g'`
+    echo $version
     if [[ "${version}" == "" ]];then
         log "info: 网络连接失败"
         return
@@ -122,9 +123,9 @@ updateclash() {
         log "下载更新包中 更新速度取决于你的网速..."
         mkdir /data/clash/clashkernel/temp
         if [ "${cgo}" == "true" ];then
-            curl --connect-timeout 5 -sL -o /data/clash/clashkernel/temp/clashMeta.gz "https://ghproxy.com/https://github.com/MetaCubeX/Clash.Meta/releases/latest/download/clash.meta-android-arm64-cgo-v"${stringversion}".gz"
+            curl --connect-timeout 5 -sL -o /data/clash/clashkernel/temp/clashMeta.gz "${ghproxy}/https://github.com/MetaCubeX/mihomo/releases/latest/download/mihomo-android-arm64-cgo-v"${stringversion}".gz"
         else
-            curl --connect-timeout 5 -sL -o /data/clash/clashkernel/temp/clashMeta.gz "https://ghproxy.com/https://github.com/MetaCubeX/Clash.Meta/releases/latest/download/clash.meta-android-arm64-v"${stringversion}".gz"
+            curl --connect-timeout 5 -sL -o /data/clash/clashkernel/temp/clashMeta.gz "${ghproxy}/https://github.com/MetaCubeX/mihomo/releases/latest/download/mihomo-android-arm64-v"${stringversion}".gz"
         fi
         if [ -f /data/clash/clashkernel/temp/clashMeta.gz ];then
             ${busybox_path} gunzip -f /data/clash/clashkernel/temp/clashMeta.gz
@@ -133,14 +134,13 @@ updateclash() {
             chmod +x /data/clash/clashkernel/clashMeta
             log "info: 更新完成"
         else
-            log "err: 更新失败，请自行前往github项目地址下载→ https://github.com/MetaCubeX/Clash.Meta/releases/latest"
+            log "err: 更新失败，请自行前往github项目地址下载→ https://github.com/MetaCubeX/mihomo/releases/latest"
             exit 1
         fi
     else
         log "info: 当前为最新版"
     fi
 }
-
 
 updateFile() {
     file="$1"
