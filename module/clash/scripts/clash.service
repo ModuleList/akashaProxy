@@ -26,54 +26,7 @@ updateFile() {
     fi
 }
 
-updateclash() {
-    update=0
-    stringversion=`curl --connect-timeout 5 -H 'Host:api.github.com' -sL -k "https://20.205.243.168/repos/MetaCubeX/mihomo/releases/latest" | grep "tag_name" | head -n 1 | awk -F ":" '{print $2}' | sed 's/\"//g;s/,//g;s/ //g' | sed 's/v//g'`
-    version=`echo "${stringversion}" | sed 's/\.//g'`
-    echo $version
-    if [[ "${version}" == "" ]];then
-        log "info: 网络连接失败"
-        return
-    fi
-    if [ -f ${Clash_bin_path} ];then
-        localversion=`eval ${Clash_bin_path} -v | sed 's/Clash Meta //g' | sed 's/ android.*//g'`
-        ifalpha=`echo "${localversion}" | grep "alpha"`
-        localversion=`echo "${localversion}" | sed 's/\.//g' | sed 's/v//g'| sed 's/Use tags: with_gisor//g'`
-    else
-        localversion="0"
-        ifalpha=""
-    fi
-    if [[ "${ifalpha}" != "" ]];then
-        log "info: 检测到最新版"
-        update=1
-    else
-        if [[ "${version}" -gt "${localversion}" ]];then
-            log "info: 检测到最新版"
-            update=1
-        fi
-    fi
-    if [ ${update} == 1 ];then
-        log "下载更新包中 更新速度取决于你的网速..."
-        mkdir /data/clash/clashkernel/temp
-        if [ "${cgo}" == "true" ];then
-            curl --connect-timeout 5 -sL -o /data/clash/clashkernel/temp/clashMeta.gz "${ghproxy}/https://github.com/MetaCubeX/mihomo/releases/latest/download/mihomo-android-arm64-cgo-v"${stringversion}".gz"
-        else
-            curl --connect-timeout 5 -sL -o /data/clash/clashkernel/temp/clashMeta.gz "${ghproxy}/https://github.com/MetaCubeX/mihomo/releases/latest/download/mihomo-android-arm64-v"${stringversion}".gz"
-        fi
-        if [ -f /data/clash/clashkernel/temp/clashMeta.gz ];then
-            ${busybox_path} gunzip -f /data/clash/clashkernel/temp/clashMeta.gz
-            mv -f /data/clash/clashkernel/temp/clashMeta /data/clash/clashkernel/clashMeta
-            rm -rf /data/clash/clashkernel/temp
-            chmod +x /data/clash/clashkernel/clashMeta
-            log "info: 更新完成"
-        else
-            log "err: 更新失败，请自行前往github项目地址下载→ https://github.com/MetaCubeX/mihomo/releases/latest"
-            exit 1
-        fi
-    else
-        log "info: 当前为最新版"
-    fi
-}
+
 
 start_clash() {
     mkfir -p ${Clash_run_path}
@@ -155,12 +108,10 @@ start_clash() {
     else
         if [ ${Clash_bin_name} == "clashMeta" ];then
             log "err: ${Clash_bin_name}内核丢失. 正在更新.."
-            updateclash
+            ${scripts_dir}/clash.tool -u
         else
             log "err: ${Clash_bin_name}内核丢失."
         fi
-        
-        
         exit 1
     fi
     if [ ! -f ${Clash_config_file} ];then

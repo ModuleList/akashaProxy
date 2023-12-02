@@ -95,50 +95,76 @@ keep_dns() {
 
 updateclash() {
     update=0
-    stringversion=`curl --connect-timeout 5 -H 'Host:api.github.com' -sL -k "https://20.205.243.168/repos/MetaCubeX/mihomo/releases/latest" | grep "tag_name" | head -n 1 | awk -F ":" '{print $2}' | sed 's/\"//g;s/,//g;s/ //g' | sed 's/v//g'`
-    version=`echo "${stringversion}" | sed 's/\.//g'`
-    echo $version
-    if [[ "${version}" == "" ]];then
-        log "info: 网络连接失败"
+    if [ "${cgo}" == "true" ] && [ "${go120}" == "false" ];then
+        namelist=`curl --connect-timeout 5 -H 'Host:api.github.com' -sL -k "https://20.205.243.168/repos/MetaCubeX/mihomo/releases" | grep "\"name\"" | grep "android" | grep "cgo" | grep -v "go120" | awk -F ':' '{print $2}' | sed 's/\"//g' | sed 's/,//g'`
+    elif [ "${cgo}" == "false" ] && [ "${go120}" == "true" ];then
+        namelist=`curl --connect-timeout 5 -H 'Host:api.github.com' -sL -k "https://20.205.243.168/repos/MetaCubeX/mihomo/releases" | grep "\"name\"" | grep "android" | grep -v "cgo" | grep "go120" | awk -F ':' '{print $2}' | sed 's/\"//g' | sed 's/,//g'`
+    else
+        namelist=`curl --connect-timeout 5 -H 'Host:api.github.com' -sL -k "https://20.205.243.168/repos/MetaCubeX/mihomo/releases" | grep "\"name\"" | grep "android" | grep -v "cgo" | grep -v "go120" | awk -F ':' '{print $2}' | sed 's/\"//g' | sed 's/,//g'`
+    fi
+    if [[ "${namelist}" == "" ]];then
+        log "error: 网络连接失败或超过API速率限制"
         return
     fi
+    if [[ "${alpha}" == "true" ]];then
+        filename=`echo "${namelist}" | grep "alpha" | sed 's/ //g'`
+        version=`echo "${namelist}" | sed 's/.*-arm64-//g' | sed 's/\.gz//g' | grep "alpha"`
+        versions=`echo "${namelist}" | sed 's/.*-arm64-//g' | sed 's/\.gz//g' | grep "alpha" | sed 's/\.//g' | sed 's/v//g'`
+    else
+        filename=`echo "${namelist}" | head -n 1 | sed 's/ //g'`
+        version=`echo "${namelist}" | sed 's/.*-arm64-//g' | sed 's/\.gz//g' | head -n 1`
+        versions=`echo "${namelist}" | sed 's/.*-arm64-//g' | sed 's/\.gz//g' | head -n 1 | sed 's/\.//g' | sed 's/v//g'`
+    fi
+    
     if [ -f ${Clash_bin_path} ];then
-        localversion=`eval ${Clash_bin_path} -v | sed 's/Clash Meta //g' | sed 's/ android.*//g'`
+        localversion=`eval ${Clash_bin_path} -v | sed 's/.*Meta //g' | sed 's/ android.*//g'`
         ifalpha=`echo "${localversion}" | grep "alpha"`
-        localversion=`echo "${localversion}" | sed 's/\.//g' | sed 's/v//g'| sed 's/Use tags: with_gisor//g'`
+        localversion=`echo "${localversion}" | sed 's/\.//g' | sed 's/v//g' | sed 's/go120//g' | sed 's/cgo//g' | sed 's/Use tags: with_gisor//g'`
     else
         localversion="0"
         ifalpha=""
     fi
-    if [[ "${ifalpha}" != "" ]];then
-        log "info: 检测到最新版"
+
+    if [[ "${ifalpha}" != "" ]] && [[ "${alpha}" == "false" ]];then
+        log "info: 检测到最新版:${version}"
         update=1
     else
-        if [[ "${version}" -gt "${localversion}" ]];then
-            log "info: 检测到最新版"
-            update=1
+        if [[ "${alpha}" == "true" ]];then
+            if [[ "${versions}" != "${localversion}" ]];then
+                log "info: 检测到最新版:${version}"
+                update=1
+            else
+                if [[ "${versions}" -gt "${localversion}" ]];then
+                log "info: 检测到最新版:${version}"
+                update=1
+                fi
+            fi
         fi
     fi
+    
+    
     if [ ${update} == 1 ];then
         log "下载更新包中 更新速度取决于你的网速..."
         mkdir /data/clash/clashkernel/temp
-        if [ "${cgo}" == "true" ];then
-            curl --connect-timeout 5 -sL -o /data/clash/clashkernel/temp/clashMeta.gz "${ghproxy}/https://github.com/MetaCubeX/mihomo/releases/latest/download/mihomo-android-arm64-cgo-v"${stringversion}".gz"
-        else
-            curl --connect-timeout 5 -sL -o /data/clash/clashkernel/temp/clashMeta.gz "${ghproxy}/https://github.com/MetaCubeX/mihomo/releases/latest/download/mihomo-android-arm64-v"${stringversion}".gz"
-        fi
+            curl --connect-timeout 5 -sL -o /data/clash/clashkernel/temp/clashMeta.gz "${ghproxy}/https://github.com/MetaCubeX/mihomo/releases/latest/download/${filename}"
         if [ -f /data/clash/clashkernel/temp/clashMeta.gz ];then
             ${busybox_path} gunzip -f /data/clash/clashkernel/temp/clashMeta.gz
+            if [ ! -f /data/clash/clashkernel/temp/clashMeta ];then
+                rm -rf /data/clash/clashkernel/temp
+                log "err: 更新失败，请自行前往github项目地址下载→ https://github.com/MetaCubeX/mihomo/releases/latest"
+                return
+            fi
             mv -f /data/clash/clashkernel/temp/clashMeta /data/clash/clashkernel/clashMeta
             rm -rf /data/clash/clashkernel/temp
             chmod +x /data/clash/clashkernel/clashMeta
             log "info: 更新完成"
         else
             log "err: 更新失败，请自行前往github项目地址下载→ https://github.com/MetaCubeX/mihomo/releases/latest"
-            exit 1
+            return
         fi
+        
     else
-        log "info: 当前为最新版"
+        log "info: 当前为最新版:${version}"
     fi
 }
 
@@ -288,9 +314,6 @@ while getopts ":kfmpusl" signal; do
     case ${signal} in
     u)
         update_pre
-        ;;
-    updateclash)
-        updateclash
         ;;
     s)
         flag=false
