@@ -68,8 +68,7 @@ jobs:
     - name: Build Module
       id: build
       run: |
-        echo "id=akashaProxy\nname=akashaProxy\nversion=v0.1-"$(shell git rev-parse --short HEAD)"\nversionCode="$(shell date '+%s')"\nauthor=heinu\ndescription=akasha terminal transparent proxy module that supports tproxy and tun and adds many easy-to-use features. Compatible with Magisk/KernelSU" > module/module.prop
-        cd module && zip -r ../akashaProxy-${{ env.buildSha }}.zip *
+        make pack
         echo "status=success" >> $GITHUB_ENV
         
     - name: Upload Artefact
