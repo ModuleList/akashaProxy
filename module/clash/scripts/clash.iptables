@@ -51,6 +51,7 @@ create_mangle_output_chain() {
 create_mangle_prerouting_filter() {
     ${iptables_wait} -t mangle -N FILTER_PRE_CLASH
     
+    ${iptables_wait} -t nat -A FILTER_PRE_CLASH -m mark --mark ${mark_id} -j ACCEPT
     ${iptables_wait} -t nat -A FILTER_PRE_CLASH -m owner --uid-owner ${Clash_user} --gid-owner ${Clash_group} -j ACCEPT
     for subnet in ${reserved_ip[*]} ; do
         ${iptables_wait} -t mangle -A FILTER_PRE_CLASH -d ${subnet} -j ACCEPT
@@ -60,6 +61,7 @@ create_mangle_prerouting_filter() {
     if [ "${ipv6}" = "true" ] ; then
         ${ip6tables_wait} -t mangle -N FILTER_PRE_CLASH
 
+        ${iptables_wait} -t nat -A FILTER_PRE_CLASH -m mark --mark ${mark_id} -j ACCEPT
         ${ip6tables_wait} -t nat -A FILTER_PRE_CLASH -m owner --uid-owner ${Clash_user} --gid-owner ${Clash_group} -j ACCEPT
         for subnet6 in ${reserved_ip6[*]} ; do
           ${ip6tables_wait} -t mangle -A FILTER_PRE_CLASH -d ${subnet6} -j ACCEPT
