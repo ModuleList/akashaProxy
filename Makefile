@@ -12,8 +12,8 @@ VERSION=$(shell cd Clash.Meta && git rev-parse --short HEAD)
 endif
 CLANG ?= clang-14
 CFLAGS := -O2 -g -Wall -Werror $(CFLAGS)
-BUILD=CGO_ENABLED=0 go build -tags with_gvisor -trimpath -ldflags '-X "github.com/Dreamacro/clash/constant.Version=$(VERSION)" \
-		-X "github.com/Dreamacro/clash/constant.BuildTime=$(BUILDTIME)" \
+BUILD=CGO_ENABLED=0 go build -tags with_gvisor -trimpath -ldflags '-X "github.com/metacubex/mihomo/constant.Version=$(VERSION)" \
+		-X "github.com/metacubex/mihomo/constant.BuildTime=$(BUILDTIME)" \
 		-w -s -buildid='
 CHAT_ID ?= 0
 TELEGRAM_BOT_TOKEN ?= 0
