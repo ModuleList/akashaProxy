@@ -7,7 +7,7 @@ system_uid="1000"
 clash_data_dir="/data/clash"
 modules_dir="/data/adb/modules"
 ABI=$(getprop ro.product.cpu.abi)
-
+mkdir -p ${clash_data_dir}/clashkernel
 if [ ! -f ${clash_data_dir}/clashkernel/clashMeta ];then
     if [ -f "${MODPATH}/bin/clashMeta-android-${ABI}.tar.bz2" ];then
         tar -xjf ${MODPATH}/bin/clashMeta-android-${ABI}.tar.bz2 -C ${clash_data_dir}/clashkernel/

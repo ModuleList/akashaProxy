@@ -13,9 +13,9 @@ log-level: info
 ipv6: true
 tcp-concurrent: true
 geox-url:
-  geoip: "https://gcore.jsdelivr.net/gh/Loyalsoldier/geoip@release/geoip.dat"
-  geosite: "https://gcore.jsdelivr.net/gh/Loyalsoldier/v2ray-rules-dat@release/geosite.dat"
-  mmdb: "https://gcore.jsdelivr.net/gh/Loyalsoldier/geoip@release/Country.mmdb"
+  geoip: "https://jsd.onmicrosoft.cn/gh/Loyalsoldier/geoip@release/geoip.dat"
+  geosite: "https://jsd.onmicrosoft.cn/gh/Loyalsoldier/v2ray-rules-dat@release/geosite.dat"
+  mmdb: "https://jsd.onmicrosoft.cn/gh/Loyalsoldier/geoip@release/Country.mmdb"
 find-process-mode: strict
 global-client-fingerprint: chrome
 
