@@ -18,6 +18,20 @@ jobs:
     - name: Clone Submodules
       run: git submodule update --init --recursive
 
+    - name: Set ENV
+      run: |
+        sudo timedatectl set-timezone "Asia/Shanghai"
+        VERSION=$(cd Clash.Meta && git rev-parse --short HEAD)
+        BUILDTIME=$(date -u)
+        echo "TAGS=with_gvisor,with_lwip" >> $GITHUB_ENV
+        echo "LDFLAGS=-X 'github.com/metacubex/mihomo/constant.Version=${VERSION}' -X 'github.com/metacubex/mihomo/constant.BuildTime=${BUILDTIME}' -w -s -buildid=" >> $GITHUB_ENV
+
+    - name: Setup Go
+      uses: actions/setup-go@v4
+      with:
+        go-version: "1.21"
+        check-latest: true
+
     - name: Setup Android NDK
       uses: nttld/setup-ndk@v1
       id: setup-ndk
@@ -25,29 +39,40 @@ jobs:
         ndk-version: r26b
         add-to-path: true
 
-    - name: Build Clash Meta
+    - name: Build Clash Meta - Arm64
       env:
         ANDROID_NDK_HOME: ${{ steps.setup-ndk.outputs.ndk-path }}
       run: |
         cd Clash.Meta
         mkdir ../module/bin
         CC=${ANDROID_NDK_HOME}/toolchains/llvm/prebuilt/linux-x86_64/bin/aarch64-linux-android33-clang
-        ls ${ANDROID_NDK_HOME}/toolchains/llvm/prebuilt/linux-x86_64/bin/
-        CGO_ENABLED=1 CC=${CC} GOARCH=arm64 GOOS=android go build -tags ${TAGS} -trimpath -ldflags "${LDFLAGS}" -o ../module/bin/clashMeta-android-arm64
-        cd ../module/bin && tar -vcjf clashMeta-android-arm64.tar.bz2 clashMeta-android-arm64 && rm -rf clashMeta-android-arm64
+        CGO_ENABLED=1 CC=${CC} GOARCH=arm64 GOOS=android go build -tags ${TAGS} -trimpath -ldflags "${LDFLAGS}" -o ../module/bin/clashMeta-android-arm64-v8a
+        cd ../module/bin && tar -vcjf clashMeta-android-arm64-v8a.tar.bz2 clashMeta-android-arm64-v8a && rm -rf clashMeta-android-arm64-v8a
 
-    - name: Build Module
-      id: build
-      if: success()
+    - name: Build Clash Meta - Armv7a
+      env:
+        ANDROID_NDK_HOME: ${{ steps.setup-ndk.outputs.ndk-path }}
       run: |
-        echo "id=akashaProxy\nname=akashaProxy\nversion=v0.1-"$(shell git rev-parse --short HEAD)"\nversionCode="$(shell date '+%s')"\nauthor=heinu\ndescription=akasha terminal transparent proxy module that supports tproxy and tun and adds many easy-to-use features. Compatible with Magisk/KernelSU" > module/module.prop
-        cd module && zip -r ../$(NAME)-$(shell git rev-parse --short HEAD).zip *
-        echo "status=success" >> $GITHUB_ENV
+        cd Clash.Meta
+        mkdir ../module/bin
+        CC=${ANDROID_NDK_HOME}/toolchains/llvm/prebuilt/linux-x86_64/bin/armv7a-linux-androideabi33-clang
+        CGO_ENABLED=1 CC=${CC} GOARCH=arm GOOS=android go build -tags ${TAGS} -trimpath -ldflags "${LDFLAGS}" -o ../module/bin/clashMeta-android-armeabi-v7a
+        cd ../module/bin && tar -vcjf clashMeta-android-arm64.tar.bz2 clashMeta-android-armeabi-v7a && rm -rf clashMeta-android-armeabi-v7a
+
+    - name: Set ENV
+      run: |
         text="${{ github.event.head_commit.message }}"
         echo "commit=$(echo $text | sed 's/\([][\\`.*^$\/+?{}()=!|:-]\)/\\\1/g')" >> $GITHUB_ENV
         echo "buildSha=$(git rev-parse --short HEAD)" >> $GITHUB_ENV
-        
 
+
+    - name: Build Module
+      id: build
+      run: |
+        echo "id=akashaProxy\nname=akashaProxy\nversion=v0.1-"$(shell git rev-parse --short HEAD)"\nversionCode="$(shell date '+%s')"\nauthor=heinu\ndescription=akasha terminal transparent proxy module that supports tproxy and tun and adds many easy-to-use features. Compatible with Magisk/KernelSU" > module/module.prop
+        cd module && zip -r ../akashaProxy-${{ env.buildSha }}.zip *
+        echo "status=success" >> $GITHUB_ENV
+        
     - name: Upload Artefact
       uses: actions/upload-artifact@main
       if: success() && !cancelled()
