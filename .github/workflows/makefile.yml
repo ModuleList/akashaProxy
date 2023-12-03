@@ -56,7 +56,7 @@ jobs:
         cd Clash.Meta
         CC=${ANDROID_NDK_HOME}/toolchains/llvm/prebuilt/linux-x86_64/bin/armv7a-linux-androideabi33-clang
         CGO_ENABLED=1 CC=${CC} GOARCH=arm GOOS=android go build -tags ${TAGS} -trimpath -ldflags "${LDFLAGS}" -o ../module/bin/clashMeta-android-armeabi-v7a
-        cd ../module/bin && tar -vcjf clashMeta-android-arm64.tar.bz2 clashMeta-android-armeabi-v7a && rm -rf clashMeta-android-armeabi-v7a
+        cd ../module/bin && tar -vcjf clashMeta-android-armeabi-v7a.tar.bz2 clashMeta-android-armeabi-v7a && rm -rf clashMeta-android-armeabi-v7a
 
     - name: Set ENV
       run: |
