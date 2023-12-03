@@ -37,12 +37,12 @@ create_mangle_prerouting_chain() {
 
 create_mangle_output_chain() {
     ${iptables_wait} -t mangle -N CLASH_OUT
-    ${iptables_wait} -A INPUT -m owner --uid-owner ${Clash_user} --gid-owner ${Clash_group} -j ACCEPT
+
     ${iptables_wait} -t mangle -A CLASH_OUT -p tcp -j MARK --set-mark ${mark_id}
     ${iptables_wait} -t mangle -A CLASH_OUT -p udp -j MARK --set-mark ${mark_id}
     if [ "${ipv6}" = "true" ] ; then
         ${ip6tables_wait} -t mangle -N CLASH_OUT
-        ${ip6tables_wait} -A INPUT -m owner --uid-owner ${Clash_user} --gid-owner ${Clash_group} -j ACCEPT
+
         ${ip6tables_wait} -t mangle -A CLASH_OUT -p tcp -j MARK --set-mark ${mark_id}
         ${ip6tables_wait} -t mangle -A CLASH_OUT -p udp -j MARK --set-mark ${mark_id}
     fi
@@ -50,7 +50,8 @@ create_mangle_output_chain() {
 
 create_mangle_prerouting_filter() {
     ${iptables_wait} -t mangle -N FILTER_PRE_CLASH
-
+    
+    ${iptables_wait} -t nat -A FILTER_PRE_CLASH -m owner --uid-owner ${Clash_user} --gid-owner ${Clash_group} -j ACCEPT
     for subnet in ${reserved_ip[*]} ; do
         ${iptables_wait} -t mangle -A FILTER_PRE_CLASH -d ${subnet} -j ACCEPT
     done
@@ -59,6 +60,7 @@ create_mangle_prerouting_filter() {
     if [ "${ipv6}" = "true" ] ; then
         ${ip6tables_wait} -t mangle -N FILTER_PRE_CLASH
 
+        ${ip6tables_wait} -t nat -A FILTER_PRE_CLASH -m owner --uid-owner ${Clash_user} --gid-owner ${Clash_group} -j ACCEPT
         for subnet6 in ${reserved_ip6[*]} ; do
           ${ip6tables_wait} -t mangle -A FILTER_PRE_CLASH -d ${subnet6} -j ACCEPT
         done
@@ -72,6 +74,7 @@ create_mangle_output_filter() {
 
     ${iptables_wait} -t mangle -N FILTER_OUT_CLASH
 
+    ${iptables_wait} -t nat -A FILTER_OUT_CLASH -m owner --uid-owner ${Clash_user} --gid-owner ${Clash_group} -j ACCEPT
     for subnet in ${reserved_ip[*]} ; do
         ${iptables_wait} -t mangle -A FILTER_OUT_CLASH -d ${subnet} -j ACCEPT
     done
@@ -99,6 +102,8 @@ create_mangle_output_filter() {
 
     if [ "${ipv6}" = "true" ] ; then
         ${ip6tables_wait} -t mangle -N FILTER_OUT_CLASH
+
+    ${ip6tables_wait} -t nat -A FILTER_OUT_CLASH -m owner --uid-owner ${Clash_user} --gid-owner ${Clash_group} -j ACCEPT
 
         for subnet6 in ${reserved_ip6[*]} ; do
             ${ip6tables_wait} -t mangle -A FILTER_OUT_CLASH -d ${subnet6} -j ACCEPT
