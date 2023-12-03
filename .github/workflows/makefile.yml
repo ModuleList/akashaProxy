@@ -25,6 +25,7 @@ jobs:
         BUILDTIME=$(date -u)
         echo "TAGS=with_gvisor,with_lwip" >> $GITHUB_ENV
         echo "LDFLAGS=-X 'github.com/metacubex/mihomo/constant.Version=${VERSION}' -X 'github.com/metacubex/mihomo/constant.BuildTime=${BUILDTIME}' -w -s -buildid=" >> $GITHUB_ENV
+        [ ! -f module/bin ] && mkdir module/bin
 
     - name: Setup Go
       uses: actions/setup-go@v4
@@ -44,7 +45,6 @@ jobs:
         ANDROID_NDK_HOME: ${{ steps.setup-ndk.outputs.ndk-path }}
       run: |
         cd Clash.Meta
-        mkdir ../module/bin
         CC=${ANDROID_NDK_HOME}/toolchains/llvm/prebuilt/linux-x86_64/bin/aarch64-linux-android33-clang
         CGO_ENABLED=1 CC=${CC} GOARCH=arm64 GOOS=android go build -tags ${TAGS} -trimpath -ldflags "${LDFLAGS}" -o ../module/bin/clashMeta-android-arm64-v8a
         cd ../module/bin && tar -vcjf clashMeta-android-arm64-v8a.tar.bz2 clashMeta-android-arm64-v8a && rm -rf clashMeta-android-arm64-v8a
@@ -54,7 +54,6 @@ jobs:
         ANDROID_NDK_HOME: ${{ steps.setup-ndk.outputs.ndk-path }}
       run: |
         cd Clash.Meta
-        mkdir ../module/bin
         CC=${ANDROID_NDK_HOME}/toolchains/llvm/prebuilt/linux-x86_64/bin/armv7a-linux-androideabi33-clang
         CGO_ENABLED=1 CC=${CC} GOARCH=arm GOOS=android go build -tags ${TAGS} -trimpath -ldflags "${LDFLAGS}" -o ../module/bin/clashMeta-android-armeabi-v7a
         cd ../module/bin && tar -vcjf clashMeta-android-arm64.tar.bz2 clashMeta-android-armeabi-v7a && rm -rf clashMeta-android-armeabi-v7a
