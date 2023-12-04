@@ -42,6 +42,11 @@ start_clash() {
             exit 1
         fi
     fi
+    
+    if [ "${ipv6}" == "true" ];then
+        log "info: 已开启代理ipv6"
+    fi
+    
     if [ "${ipv6}" = "false" ] ; then
         for net in /proc/sys/net/ipv6/conf/{wlan*,*data*} ; do
             echo ${net} | grep -q wlan
