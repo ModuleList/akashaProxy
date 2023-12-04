@@ -72,28 +72,20 @@ proxy-groups:
 
 # 分流规则提供(订阅)组
 rule-providers:
-# anti-AD 黑名单规则
-  # anti-AD:
-    # type: http
-    # behavior: domain
-    # format: yaml
-    # path: ./rule_providers/anti-AD.yaml
-    # url: "https://raw.githubusercontent.com/privacy-protection-tools/anti-AD/master/anti-ad-clash.yaml?"
-    # interval: 600
-  # # anti-AD 白名单规则
-  # anti-AD-white:
-    # type: http
-    # behavior: domain
-    # format: yaml
-    # path: ./rule_providers/anti-AD-white.yaml
-    # url: "https://raw.githubusercontent.com/privacy-protection-tools/dead-horse/master/anti-ad-white-for-clash.yaml?"
-    # interval: 600
+# 秋风广告规则Clash版本
+# Github：https://github.com/TG-Twilight/AWAvenue-Adblock-Rule
+  秋风广告规则:
+    type: http
+    behavior: domain
+    format: yaml
+    path: ./rule_providers/AWAvenue-Adblock-Rule-Clash.yaml
+    url: "https://raw.githubusercontent.com/TG-Twilight/AWAvenue-Adblock-Rule/main/AWAvenue-Adblock-Rule-Clash.yaml"
+    interval: 600
 
 # 分流规则
 rules:
   - AND,(AND,(DST-PORT,443),(NETWORK,UDP)),(NOT,((GEOSITE,cn))),REJECT # 禁用quic(不包括国内)
-  # - RULE-SET,anti-AD-white,DIRECT
-  # - RULE-SET,anti-AD,REJECT
+  - RULE-SET,秋风广告规则,REJECT
   - AND,((PROCESS-NAME,clashMeta),(NETWORK,UDP)),REJECT
   - GEOSITE,cn,DIRECT
   - GEOIP,CN,DIRECT
