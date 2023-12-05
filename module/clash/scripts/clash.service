@@ -173,7 +173,7 @@ start_clash() {
         log "err: 缺少GeoSite资源文件 正在自动下载."
         updateFile ${Clash_GeoSite_file} ${GeoSite_url}
     fi
-    clasherror=$( ${busybox_path} setuidgid ${Clash_user_group} ${Clash_bin_path} -d ${Clash_data_dir} -f ${temporary_config_file} -t | grep error | sed 's/"//g' | awk -F 'msg=' '{print $2}')
+    clasherror=$(${Clash_bin_path} -d ${Clash_data_dir} -f ${temporary_config_file} -t)
     if [ -f ${temporary_config_file} ]; then
         if $(${Clash_bin_path} -d ${Clash_data_dir} -t -f ${temporary_config_file} > /dev/null) ; then
             if [ "${Clash_tun_status}" == "true" ]; then
