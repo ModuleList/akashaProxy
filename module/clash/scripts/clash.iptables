@@ -61,11 +61,8 @@ create_mangle_prerouting_filter() {
     if [ "${ipv6}" = "true" ] ; then
         ${ip6tables_wait} -t mangle -N FILTER_PRE_CLASH
 
-        if [ "${nat_kernel}" = "true" ] ; then
-            ${ip6tables_wait} -t nat -A FILTER_PRE_CLASH -m mark --mark ${mark_id} -j ACCEPT
-            ${ip6tables_wait} -t nat -A FILTER_PRE_CLASH -m owner --uid-owner ${Clash_user} --gid-owner ${Clash_group} -j ACCEPT
-        fi
-
+        ${ip6tables_wait} -t nat -A FILTER_PRE_CLASH -m mark --mark ${mark_id} -j ACCEPT
+        ${ip6tables_wait} -t nat -A FILTER_PRE_CLASH -m owner --uid-owner ${Clash_user} --gid-owner ${Clash_group} -j ACCEPT
         for subnet6 in ${reserved_ip6[*]} ; do
           ${ip6tables_wait} -t mangle -A FILTER_PRE_CLASH -d ${subnet6} -j ACCEPT
         done
@@ -108,10 +105,7 @@ create_mangle_output_filter() {
     if [ "${ipv6}" = "true" ] ; then
         ${ip6tables_wait} -t mangle -N FILTER_OUT_CLASH
 
-        if [ "${nat_kernel}" = "true" ] ; then
-            ${ip6tables_wait} -t nat -A FILTER_OUT_CLASH -m owner --uid-owner ${Clash_user} --gid-owner ${Clash_group} -j ACCEPT
-        fi
-
+        ${ip6tables_wait} -t nat -A FILTER_OUT_CLASH -m owner --uid-owner ${Clash_user} --gid-owner ${Clash_group} -j ACCEPT
         for subnet6 in ${reserved_ip6[*]} ; do
             ${ip6tables_wait} -t mangle -A FILTER_OUT_CLASH -d ${subnet6} -j ACCEPT
         done
@@ -235,7 +229,10 @@ apply_rules() {
 
     ${iptables_wait} -t nat -A PREROUTING -j FILTER_PRE_DNS
     ${iptables_wait} -t nat -A OUTPUT -j FILTER_OUT_DNS
-
+    if [ "${safe_ui}" = "true" ] ; then
+        ${iptables_wait} -A INPUT -s 127.0.0.1 -p tcp --dport ${Clash_ui_port} -j ACCEPT
+        ${iptables_wait} -A INPUT -p tcp --dport ${Clash_ui_port} -j DROP
+    fi
     if [ "${ipv6}" = "true" ] ; then
         ${ip6tables_wait} -t mangle -A PREROUTING -p tcp -m socket -j DIVERT
         ${ip6tables_wait} -t mangle -A PREROUTING -p udp -m socket -j DIVERT
@@ -258,10 +255,8 @@ apply_rules() {
             ${ip6tables_wait} -I OUTPUT -p udp --dport 53 -j DROP
         fi
         if [ "${safe_ui}" = "true" ] ; then
-            ${iptables_wait} -A INPUT -s 127.0.0.1 -p tcp --dport ${Clash_ui_port} -j ACCEPT
             ${ip6tables_wait} -A INPUT -s 127.0.0.1 -p tcp --dport ${Clash_ui_port} -j ACCEPT
             ${ip6tables_wait} -A INPUT -p tcp --dport ${Clash_ui_port} -j DROP
-            ${iptables_wait} -A INPUT -p tcp --dport ${Clash_ui_port} -j DROP
         fi
     fi
 
@@ -355,6 +350,10 @@ set_tun(){
     done
     ${iptables_wait} -I FORWARD -o ${tun_device} -j ACCEPT
 	${iptables_wait} -I FORWARD -i ${tun_device} -j ACCEPT
+    if [ "${safe_ui}" = "true" ] ; then
+        ${iptables_wait} -A INPUT -s 127.0.0.1 -p tcp --dport ${Clash_ui_port} -j ACCEPT
+        ${iptables_wait} -A INPUT -p tcp --dport ${Clash_ui_port} -j DROP
+    fi
     create_nat_prerouting_dns
     create_nat_prerouting_filter
 
@@ -401,10 +400,13 @@ set_tun(){
         done
         ${ip6tables_wait} -I FORWARD -o ${tun_device} -j ACCEPT
         ${ip6tables_wait} -I FORWARD -i ${tun_device} -j ACCEPT
-        if [ "${nat_kernel}" = "true" ] ; then
-            ${ip6tables_wait} -t nat -A PREROUTING -j FILTER_PRE_DNS
-            ${ip6tables_wait} -t nat -A OUTPUT -j FILTER_OUT_DNS
+        if [ "${safe_ui}" = "true" ] ; then
+            ${ip6tables_wait} -A INPUT -s 127.0.0.1 -p tcp --dport ${Clash_ui_port} -j ACCEPT
+            ${ip6tables_wait} -A INPUT -p tcp --dport ${Clash_ui_port} -j DROP
         fi
+
+        ${ip6tables_wait} -t nat -A PREROUTING -j FILTER_PRE_DNS
+        ${ip6tables_wait} -t nat -A OUTPUT -j FILTER_OUT_DNS
         
         ${ip6tables_wait} -t mangle -N CLASH_OUT
         ${ip6tables_wait} -t mangle -A CLASH_OUT -m owner --uid-owner ${Clash_user} --gid-owner ${Clash_group} -j RETURN
