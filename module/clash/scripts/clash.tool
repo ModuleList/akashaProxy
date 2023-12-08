@@ -128,12 +128,12 @@ upgrade_clash() {
             log "info: 更新完成"
         else
             rm -rf /data/clash/clashkernel/temp
-            log "err: 更新失败, 请自行前往 GitHub 项目地址下载→ https://github.com/MetaCubeX/mihomo/releases/latest"
+            log "err: 更新失败, 请自行前往 GitHub 项目地址下载 → https://github.com/MetaCubeX/mihomo/releases"
             return
         fi
     else
         rm -rf /data/clash/clashkernel/temp
-        log "err: 更新失败, 请自行前往 GitHub 项目地址下载→ https://github.com/MetaCubeX/mihomo/releases/latest"
+        log "err: 更新失败, 请自行前往 GitHub 项目地址下载 → https://github.com/MetaCubeX/mihomo/releases"
         return
     fi
 }
