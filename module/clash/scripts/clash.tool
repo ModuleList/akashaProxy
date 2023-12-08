@@ -93,82 +93,83 @@ keep_dns() {
     unset local_dns
 }
 
-updateclash() {
-    update=0
-    if [ "${cgo}" == "true" ] && [ "${go120}" == "false" ];then
-        namelist=`curl --connect-timeout 5 -H 'Host:api.github.com' -sL -k "https://20.205.243.168/repos/MetaCubeX/mihomo/releases" | grep "\"name\"" | grep "android" | grep "cgo" | grep -v "go120" | awk -F ':' '{print $2}' | sed 's/\"//g' | sed 's/,//g'`
-    elif [ "${cgo}" == "false" ] && [ "${go120}" == "true" ];then
-        namelist=`curl --connect-timeout 5 -H 'Host:api.github.com' -sL -k "https://20.205.243.168/repos/MetaCubeX/mihomo/releases" | grep "\"name\"" | grep "android" | grep -v "cgo" | grep "go120" | awk -F ':' '{print $2}' | sed 's/\"//g' | sed 's/,//g'`
+upgrade_clash() {
+    log "开始下载 ${Clash_bin_name} 内核 更新速度取决于你的网速..."
+    mkdir -p /data/clash/clashkernel/temp
+    general_clash_filename="mihomo-android-arm64-"
+    if [[ ${cgo} == "true" && ${go120} == "true" ]];then
+        unset remote_clash_ver
+        unset general_clash_filename
+        echo "err: 目前无 cgo 和 go120 共存的 ${Clash_bin_name} 内核"
+    elif [[ ${cgo} == "true" ]];then
+        specific_clash_filename=${general_clash_filename}cgo-${remote_clash_ver}
+        unset remote_clash_ver
+        unset general_clash_filename
+    elif [[ ${go120} == "true" ]];then
+        specific_clash_filename=${general_clash_filename}go120-${remote_clash_ver}
+        unset remote_clash_ver
+        unset general_clash_filename
     else
-        namelist=`curl --connect-timeout 5 -H 'Host:api.github.com' -sL -k "https://20.205.243.168/repos/MetaCubeX/mihomo/releases" | grep "\"name\"" | grep "android" | grep -v "cgo" | grep -v "go120" | awk -F ':' '{print $2}' | sed 's/\"//g' | sed 's/,//g'`
-    fi
-    if [[ "${namelist}" == "" ]];then
-        log "error: 网络连接失败或超过API速率限制"
-        return
-    fi
-    if [[ "${alpha}" == "true" ]];then
-        filename=`echo "${namelist}" | grep "alpha" | sed 's/ //g'`
-        version=`echo "${namelist}" | sed 's/.*-arm64-//g' | sed 's/\.gz//g' | grep "alpha"`
-        versions=`echo "${namelist}" | sed 's/.*-arm64-//g' | sed 's/\.gz//g' | grep "alpha" | sed 's/\.//g' | sed 's/v//g'`
-    else
-        filename=`echo "${namelist}" | head -n 1 | sed 's/ //g'`
-        version=`echo "${namelist}" | sed 's/.*-arm64-//g' | sed 's/\.gz//g' | head -n 1`
-        versions=`echo "${namelist}" | sed 's/.*-arm64-//g' | sed 's/\.gz//g' | head -n 1 | sed 's/\.//g' | sed 's/v//g'`
-    fi
-    
-    if [ -f ${Clash_bin_path} ];then
-        localversion=`eval ${Clash_bin_path} -v | sed 's/.*Meta //g' | sed 's/ android.*//g'`
-        ifalpha=`echo "${localversion}" | grep "alpha"`
-        localversion=`echo "${localversion}" | sed 's/\.//g' | sed 's/v//g' | sed 's/go120//g' | sed 's/cgo//g' | sed 's/Use tags: with_gisor//g'`
-    else
-        localversion="0"
-        ifalpha=""
+        specific_clash_filename=${general_clash_filename}${remote_clash_ver}
+        unset remote_clash_ver
+        unset general_clash_filename
     fi
 
-    if [[ "${ifalpha}" != "" ]] && [[ "${alpha}" == "false" ]];then
-        log "info: 检测到最新版:${version}"
-        update=1
-    else
-        if [[ "${alpha}" == "true" ]];then
-            if [[ "${versions}" != "${localversion}" ]];then
-                log "info: 检测到最新版:${version}"
-                update=1
-            else
-                if [[ "${versions}" -gt "${localversion}" ]];then
-                log "info: 检测到最新版:${version}"
-                update=1
-                fi
-            fi
-        fi
-    fi
-    
-    
-    if [ ${update} == 1 ];then
-        log "下载更新包中 更新速度取决于你的网速..."
-        mkdir /data/clash/clashkernel/temp
-            curl --connect-timeout 5 -sL -o /data/clash/clashkernel/temp/clashMeta.gz "${ghproxy}/https://github.com/MetaCubeX/mihomo/releases/latest/download/${filename}"
-        if [ -f /data/clash/clashkernel/temp/clashMeta.gz ];then
-            ${busybox_path} gunzip -f /data/clash/clashkernel/temp/clashMeta.gz
-            if [ ! -f /data/clash/clashkernel/temp/clashMeta ];then
-                rm -rf /data/clash/clashkernel/temp
-                log "err: 更新失败，请自行前往github项目地址下载→ https://github.com/MetaCubeX/mihomo/releases/latest"
-                return
-            fi
-            mv -f /data/clash/clashkernel/temp/clashMeta /data/clash/clashkernel/clashMeta
+    curl --connect-timeout 5 -Ls -o /data/clash/clashkernel/temp/clashMeta.gz "${ghproxy}/https://github.com/MetaCubeX/mihomo/releases/latest/download/${specific_clash_filename}.gz"
+    unset specific_clash_filename
+
+    if [ -f /data/clash/clashkernel/temp/clashMeta.gz ];then
+        ${busybox_path} gunzip -f /data/clash/clashkernel/temp/clashMeta.gz
+        if [ -f /data/clash/clashkernel/temp/clashMeta ];then
+            rm -f /data/clash/clashkernel/clashMeta
+            mv /data/clash/clashkernel/temp/clashMeta /data/clash/clashkernel/
             rm -rf /data/clash/clashkernel/temp
             chmod +x /data/clash/clashkernel/clashMeta
             log "info: 更新完成"
         else
-            log "err: 更新失败，请自行前往github项目地址下载→ https://github.com/MetaCubeX/mihomo/releases/latest"
+            rm -rf /data/clash/clashkernel/temp
+            log "err: 更新失败, 请自行前往 GitHub 项目地址下载 → https://github.com/MetaCubeX/mihomo/releases"
             return
         fi
-        
     else
-        log "info: 当前为最新版:${version}"
+        rm -rf /data/clash/clashkernel/temp
+        log "err: 更新失败, 请自行前往 GitHub 项目地址下载 → https://github.com/MetaCubeX/mihomo/releases"
+        return
     fi
 }
 
-updateFile() {
+check_clash_ver() {
+    if [[ "${alpha}" == "true" ]];then
+        remote_clash_ver=$(curl --connect-timeout 5 -Ls "${ghproxy}/https://github.com/MetaCubeX/mihomo/releases/download/Prerelease-Alpha/version.txt")
+    else
+        remote_clash_ver=$(curl --connect-timeout 5 -Ls "${ghproxy}/https://github.com/MetaCubeX/mihomo/releases/latest/download/version.txt")
+    fi
+    if [[ "${remote_clash_ver}" == "" ]];then
+        unset remote_clash_ver
+        log "err: 网络连接失败或超过 API 速率限制"
+        return
+    fi
+
+    if [ -f ${Clash_bin_path} ];then
+        local_clash_ver=$(eval ${Clash_bin_path} -v | head -n 1 | sed 's/.*Meta //g' | sed 's/ android.*//g')
+    else
+        local_clash_ver=""
+    fi
+
+    if [[ "${remote_clash_ver}" == "${local_clash_ver}" ]];then
+        log "info: 当前为最新版: ${local_clash_ver}"
+    elif [[ ${local_clash_ver} == "" ]];then
+        log "err: 获取本地版本失败, 最新版为: ${remote_clash_ver}"
+        upgrade_clash
+    else
+        log "info: 本地版本为: ${local_clash_ver}, 最新版为: ${remote_clash_ver}"
+        upgrade_clash
+    fi
+
+    unset local_clash_ver
+}
+
+update_file() {
     file="$1"
     file_bk="${file}.bk"
     update_url="$2"
@@ -267,20 +268,20 @@ update_pre() {
     flag=false
 
     if [ ${auto_updateGeoIP} == "true" ]; then
-        updateFile ${Clash_GeoIP_file} ${GeoIP_url}
+        update_file ${Clash_GeoIP_file} ${GeoIP_url}
         if [ "$?" = "0" ]; then
             flag=true
         fi
     fi
 
     if [ ${auto_updateGeoSite} == "true" ]; then
-        updateFile ${Clash_GeoSite_file} ${GeoSite_url}
+        update_file ${Clash_GeoSite_file} ${GeoSite_url}
         if [ "$?" = "0" ]; then
             flag=true
         fi
     fi
     if [ ${auto_updateclashMeta} == "true" ]; then
-            updateclash
+            check_clash_ver
             if [ "$?" = "0" ]; then
                 flag=true
             fi

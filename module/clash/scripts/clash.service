@@ -6,7 +6,7 @@ scripts_dir=`dirname ${scripts}`
 rm -rf ${CFM_logs_file}
 
 
-updateFile() {
+update_file() {
     file="$1"
     file_bk="${file}.bk"
     update_url="$2"
@@ -29,16 +29,16 @@ updateFile() {
 
 
 start_clash() {
-    mkfir -p ${Clash_run_path}
+    mkdir -p ${Clash_run_path}
     if [ ${adguard} == "true" ];then
         if [ ! -f "${Adguard_bin_path}" ];then
-            log "err: 已开启adguard拓展 home但未刷入过adguard扩展包!"
+            log "err: 已开启 AdGuard Home 拓展但未找到 AdGuard Home 文件!"
             exit 1
         fi
     fi
     if [ ${mosdns} == "true" ];then
         if [ ! -f "${Mosdns_bin_path}" ];then
-            log "err: 已开启mosdns拓展 但未刷入过mosdns扩展包!"
+            log "err: 已开启 mosdns 拓展 但未刷入过 mosdns 扩展包!"
             exit 1
         fi
     fi
@@ -167,11 +167,11 @@ start_clash() {
     fi
     if [ ! -f ${Clash_GeoIP_file} ];then
         log "err: 缺少GeoIP资源文件 正在自动下载."
-        updateFile ${Clash_GeoIP_file} ${GeoIP_url}
+        update_file ${Clash_GeoIP_file} ${GeoIP_url}
     fi
     if [ ! -f ${Clash_GeoSite_file} ];then
         log "err: 缺少GeoSite资源文件 正在自动下载."
-        updateFile ${Clash_GeoSite_file} ${GeoSite_url}
+        update_file ${Clash_GeoSite_file} ${GeoSite_url}
     fi
     clasherror=$(${Clash_bin_path} -d ${Clash_data_dir} -f ${temporary_config_file} -t)
     if [ -f ${temporary_config_file} ]; then
