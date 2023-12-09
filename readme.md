@@ -6,7 +6,7 @@
 
 ## Module path:
 
-**Work path: /data/clash/""
+**Work path: /data/clash/**
 ```
 ├── adguard
 │   ├── // AdGuardHome module
@@ -32,8 +32,6 @@ clashMeta Tutorial:
 https://wiki.metacubex.one
 https://clash-meta.wiki
 
-clash Tutorial:
-https://github.com/Dreamacro/clash/wiki/Configuration#introduction
 
 ## build
 
