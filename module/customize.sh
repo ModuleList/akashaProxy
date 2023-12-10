@@ -51,13 +51,16 @@ else
     ui_print "-packages.list The file already exists. Do not add the default file"
 fi
 
-if [ ${config} == "true" ];then
-    ui_print "-clash.config The file already exists. Do not add the default file."
-        rm -rf ${MODPATH}/clash/clash.config
-else
+if [ -f "${clash_data_dir}/clash.config" ];then
     ui_print "-clash.config The file already exists. Do not add the default file"
+else
+    if [ ${config} == "true" ];then
+        ui_print "-clash.config The file already exists. Do not add the default file."
+            rm -rf ${MODPATH}/clash/clash.config
+    else
+        ui_print "-clash.config The file already exists. Do not add the default file"
+    fi
 fi
-
 rm -rf ${MODPATH}/asset
 rm -rf ${MODPATH}/clashkernel
 
