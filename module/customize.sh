@@ -33,32 +33,22 @@ unzip -o "${ZIPFILE}" -x 'META-INF/*' -d ${MODPATH} >&2
 if [ -f "${clash_data_dir}/config.yaml" ];then
     ui_print "-config.yaml The file already exists. Do not add the default file."
     rm -rf ${MODPATH}/clash/config.yaml
-else
-    ui_print "-config.yaml The file already exists. Do not add the default file."
 fi
 
 if [ -f "${clash_data_dir}/clash.yaml" ];then
     ui_print "-clash.yaml The file already exists. Do not add the default file."
     rm -rf ${MODPATH}/clash/clash.yaml
-else
-    ui_print "-clash.yaml The file already exists. Do not add the default file."
 fi
 
 if [ -f "${clash_data_dir}/packages.list" ];then
     ui_print "-packages.list The file already exists. Do not add the default file."
-        rm -rf ${MODPATH}/clash/packages.list
-else
-    ui_print "-packages.list The file already exists. Do not add the default file"
+    rm -rf ${MODPATH}/clash/packages.list
 fi
 
 if [ -f "${clash_data_dir}/clash.config" ];then
-    ui_print "-clash.config The file already exists. Do not add the default file"
-else
-    if [ ${config} == "true" ];then
+    if [ ${config} == "false" ];then
         ui_print "-clash.config The file already exists. Do not add the default file."
-            rm -rf ${MODPATH}/clash/clash.config
-    else
-        ui_print "-clash.config The file already exists. Do not add the default file"
+        rm -rf ${MODPATH}/clash/clash.config
     fi
 fi
 rm -rf ${MODPATH}/asset
