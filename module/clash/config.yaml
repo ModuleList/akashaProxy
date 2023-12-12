@@ -73,14 +73,15 @@ proxy-groups:
 # 分流规则提供(订阅)组
 rule-providers:
 # 秋风广告规则Clash版本
-# Github：https://github.com/TG-Twilight/AWAvenue-Adblock-Rule
+# Github：https://github.com/TG-Twilight/AWAvenue-Ads-Rule
+# 此为域名拦截规则，请根据实际情况，自行设置为REJECT/广告拦截之类的分组。
   秋风广告规则:
     type: http
     behavior: domain
     format: yaml
-    path: ./rule_providers/AWAvenue-Adblock-Rule-Clash.yaml
-    url: "https://raw.githubusercontent.com/TG-Twilight/AWAvenue-Adblock-Rule/main/AWAvenue-Adblock-Rule-Clash.yaml"
-    interval: 600
+    path: ./rule_providers/AWAvenue-Ads-Rule-Clash.yaml
+    url: "https://raw.githubusercontent.com/TG-Twilight/AWAvenue-Ads-Rule/main/AWAvenue-Ads-Rule-Clash.yaml"
+    interval: 60480
 
 # 分流规则
 rules:
