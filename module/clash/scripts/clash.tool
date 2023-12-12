@@ -171,21 +171,17 @@ check_clash_ver() {
 
 update_file() {
     file="$1"
-    file_bk="${file}.bk"
+    file_temp="${file}.temp"
     update_url="$2"
 
-    mv -f ${file} ${file_bk}
-    echo "curl -L ${update_url} -o ${file} "
-    curl -L ${update_url} -o ${file} 2>&1 # >> /dev/null 2>&1
+    curl -L ${update_url} -o ${file_temp}
 
-
-    if [ -f "${file}" ]; then
-        rm -rf ${file_bk}
-
+    if [ -f "${file_temp}" ]; then
+        mv -f ${file_temp} ${file}
         log "info: ${file}更新成功."
     else
-        mv ${file_bk} ${file}
-        log "war: ${file}更新失败,文件已恢复.."
+        rm -rf ${file_temp}
+        log "warn: ${file}更新失败"
         return 1
     fi
 }
