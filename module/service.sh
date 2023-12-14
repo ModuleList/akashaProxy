@@ -16,7 +16,7 @@ fi
 crond -c ${Clash_run_path}
 rm -rf ${Clash_run_path}/run.logs
 chmod -R 6755 ${Clash_data_dir}/clashkernel
-ln /data/clash ${module_dir}/clash
+
 nohup ${scripts_dir}/clash.service -s && ${scripts_dir}/clash.iptables -s
 
 inotifyd ${scripts_dir}/clash.inotify ${module_dir} >> /dev/null &
