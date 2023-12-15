@@ -6,12 +6,11 @@ system_gid="1000"
 system_uid="1000"
 clash_data_dir="/data/clash"
 modules_dir="/data/adb/modules"
-config="true" # 是否替换clash.config
-
+config="false" #更新是否替换clash.config
+ABI=$(getprop ro.product.cpu.abi)
 mkdir -p ${clash_data_dir}/run
 mkdir -p ${clash_data_dir}/clashkernel
 
-ABI=$(getprop ro.product.cpu.abi)
 if [ ! -f ${clash_data_dir}/clashkernel/clashMeta ];then
     if [ -f "${MODPATH}/bin/clashMeta-android-${ABI}.tar.bz2" ];then
         tar -xjf ${MODPATH}/bin/clashMeta-android-${ABI}.tar.bz2 -C ${clash_data_dir}/clashkernel/
@@ -27,35 +26,36 @@ if [ ! -f ${clash_data_dir}/clashkernel/clashMeta ];then
     fi
 fi
 
+unzip -o "${ZIPFILE}" -x 'META-INF/*' -d ${MODPATH} >&2
+
 if [ -f "${clash_data_dir}/config.yaml" ];then
     ui_print "-config.yaml The file already exists. Do not add the default file."
-    rm -rf ${MODPATH}/clash/config.yaml
+    rm -rf ${MODPATH}/config.yaml
+else
+    ui_print "-config.yaml The file not exists. Do add the default file."
 fi
 
 if [ -f "${clash_data_dir}/clash.yaml" ];then
     ui_print "-clash.yaml The file already exists. Do not add the default file."
-    rm -rf ${MODPATH}/clash/clash.yaml
+    rm -rf ${MODPATH}/clash.yaml
+else
+    ui_print "-clash.yaml The file not exists. Do add the default file."
 fi
 
 if [ -f "${clash_data_dir}/packages.list" ];then
-    ui_print "-packages.list The file already exists. Do not add the default file."
-    rm -rf ${MODPATH}/clash/packages.list
+    if [ "${config}" == "false" ];then
+        ui_print "-packages.list The file already exists. Do not add the default file."
+        rm -rf ${MODPATH}/packages.list
+    fi
+else
+    ui_print "-packages.list The file not exists. Do add the default file."
 fi
 
-if [ -f "${clash_data_dir}/clash.config" ];then
-    if [ ${config} == "false" ];then
-        ui_print "-clash.config The file already exists. Do not add the default file."
-        rm -rf ${MODPATH}/clash/clash.config
-    fi
-fi
-rm -rf ${MODPATH}/asset
-rm -rf ${MODPATH}/bin
-rm -rf ${MODPATH}/clashkernel
 mv -f ${MODPATH}/clash/* ${clash_data_dir}/
-rm -rf ${MODPATH}/clash
+rm -rf ${MODPATH}/clashkernel
 
 ui_print "- Start setting permissions."
-set_perm_recursive ${clash_data_dir} 0 0 0644 0644
+set_perm_recursive ${MODPATH} 0 0 0755 0755
 set_perm  ${MODPATH}/system/bin/setcap  0  0  0755
 set_perm  ${MODPATH}/system/bin/getcap  0  0  0755
 set_perm  ${MODPATH}/system/bin/getpcaps  0  0  0755
@@ -73,7 +73,7 @@ ui_print ""
 ui_print ""
 ui_print "************************************************"
 ui_print "## Module path:
-Work path: /data/clash/
+**Work path: /data/clash/
 ```
 ├── adguard
 │   ├── // AdGuardHome module
