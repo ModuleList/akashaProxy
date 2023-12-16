@@ -6,7 +6,7 @@ system_gid="1000"
 system_uid="1000"
 clash_data_dir="/data/clash"
 modules_dir="/data/adb/modules"
-config="false" #更新是否替换clash.config
+config="true" #更新是否替换clash.config
 ABI=$(getprop ro.product.cpu.abi)
 mkdir -p ${clash_data_dir}/run
 mkdir -p ${clash_data_dir}/clashkernel
