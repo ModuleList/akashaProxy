@@ -33,14 +33,11 @@ start_clash() {
     fi
     if [ ${mosdns} == "true" ];then
         if [ ! -f "${Mosdns_bin_path}" ];then
-            log "err: 已开启 mosdns 拓展 但未刷入过 mosdns 扩展包!"
+            log "err: 已开启 mosdns 拓展但未找到 mosdn 文件!"
             exit 1
         fi
     fi
     
-    if [ "${ipv6}" == "true" ];then
-        log "info: 已开启代理ipv6"
-    fi
     
     if [ "${ipv6}" = "false" ] ; then
         for net in /proc/sys/net/ipv6/conf/{wlan*,*data*} ; do
@@ -58,6 +55,7 @@ start_clash() {
             fi
             echo 0 > ${net}/disable_ipv6
         done
+        log "info: 已开启代理ipv6"
     fi
 
     pid=`cat ${Clash_pid_file} 2> /dev/null`
@@ -65,7 +63,23 @@ start_clash() {
         log "info: 检测到clash已启动,此次不启动."
         exit 1
     fi
-
+    
+    if [ ${adguard} == "true" ];then
+        pid=`cat ${Adguard_pid_file} 2> /dev/null`
+        if (cat /proc/${pid}/cmdline | grep -q AdGuardHome) ; then
+            log "info: 检测到adguard home已启动,此次不启动."
+            exit 1
+        fi
+    fi
+    
+    if [ ${mosdns} == "true" ];then
+        pid=`cat ${Mosdns_pid_file} 2> /dev/null`
+        if (cat /proc/${pid}/cmdline | grep -q mosdns) ; then
+            log "info: 检测到mosdns已启动,此次不启动."
+            exit 1
+        fi
+    fi
+    
     if [ "${Clash_tproxy_port}" == 0 ] || [ "${Clash_tproxy_port}" == ""  ]; then
         if [ "${Clash_tun_status}" != "true" ]; then
             log "err: tproxy和tun得二选一."
@@ -123,11 +137,13 @@ start_clash() {
         log "err: 缺少config.yaml 订阅(节点)配置文件."
         exit 1
     fi
-    if [ ! -f ${template_file} ];then
-        log "err: 缺少clash.yaml clash配置文件."
-        exit 1
+    if [ "${Split}" == "true" ];then
+        if [ ! -f ${template_file} ];then
+            log "err: 缺少clash.yaml clash配置文件."
+            exit 1
+        fi
     fi
-
+    
     if [ ${ml} == "true" ];then
         if [ ! -f ${Clash_run_path}/ip.dat ];then
             log "info: 正在获取免流ip..."
@@ -156,11 +172,15 @@ start_clash() {
         log "info: 当前百度系免流ip:${baidumlip}"
         log "info: 当前腾讯系免流ip:${txmlip}"
     fi
-    cp -f ${template_file} ${temporary_config_file}.swp && echo "\n" >> ${temporary_config_file}.swp
-    sed -n -E '/^proxies:.*$/,$p' ${Clash_config_file} >> ${temporary_config_file}.swp
-    echo "\n" >> ${temporary_config_file}.swp
-    sed -i '/^[  ]*$/d' ${temporary_config_file}.swp
-    mv -f ${temporary_config_file}.swp ${temporary_config_file}
+    if [ "${Split}" == "true" ];then
+        cp -f ${template_file} ${temporary_config_file}.swp && echo "\n" >> ${temporary_config_file}.swp
+        sed -n -E '/^proxies:.*$/,$p' ${Clash_config_file} >> ${temporary_config_file}.swp
+        echo "\n" >> ${temporary_config_file}.swp
+        sed -i '/^[  ]*$/d' ${temporary_config_file}.swp
+        mv -f ${temporary_config_file}.swp ${temporary_config_file}
+    else
+        cp -f ${Clash_config_file} ${temporary_config_file}
+    fi
     if [ ${ml} == "true" ];then
         sed -i "s/百度系免流ip/${baidumlip}/g" ${temporary_config_file}
         sed -i "s/腾讯系免流ip/${txmlip}/g" ${temporary_config_file}
