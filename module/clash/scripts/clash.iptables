@@ -445,29 +445,40 @@ del_tun(){
 while getopts ":sk" signal ; do
     case ${signal} in
         s)
-            if [ "${mode}" = "blacklist" ] || [ "${mode}" = "whitelist" ] || [ "${mode}" = "global" ] ; then
-                if [ "${Clash_tun_status}" == "true" ]; then
-                    log "info: 当前为:Tun模式."
-                    if [ "${Clash_auto_route}" == "true" ]; then
-                        ${iptables_wait} -I FORWARD -o ${tun_device} -j ACCEPT
-                        ${iptables_wait} -I FORWARD -i ${tun_device} -j ACCEPT
-                        ${ip6tables_wait} -I FORWARD -o ${tun_device} -j ACCEPT
-                        ${ip6tables_wait} -I FORWARD -i ${tun_device} -j ACCEPT
-                        exit 0
-                    else
-                        set_tun
-                    fi
-                else
-                    log "info: 当前为:tproxy模式."
-                    create_rule_rules && apply_rules
-                fi
-                log "info: iptables规则已应用."
-            else
+            if [ "${mode}" == "socks" ] && [ "${Clash_tun_status}" == "true" ];then
+                log "warn: 当socks模式下不可开启Tun."
                 exit 0
+            fi
+            if [ "${mode}" == "socks" ];then
+                log "info: 当前为:socks模式."
+            else
+                if [ "${mode}" == "blacklist" ] || [ "${mode}" == "whitelist" ] || [ "${mode}" == "global" ] ; then
+                    if [ "${Clash_tun_status}" == "true" ]; then
+                        log "info: 当前为:Tun模式."
+                        if [ "${Clash_auto_route}" == "true" ]; then
+                            ${iptables_wait} -I FORWARD -o ${tun_device} -j ACCEPT
+                            ${iptables_wait} -I FORWARD -i ${tun_device} -j ACCEPT
+                            ${ip6tables_wait} -I FORWARD -o ${tun_device} -j ACCEPT
+                            ${ip6tables_wait} -I FORWARD -i ${tun_device} -j ACCEPT
+                            exit 0
+                        else
+                            set_tun
+                        fi
+                    else
+                        log "info: 当前为:tproxy模式."
+                        create_rule_rules && apply_rules
+                    fi
+                    log "info: iptables规则已应用."
+                else
+                    exit 0
+                fi
             fi
             ;;
         k)
-            if [ "${mode}" = "blacklist" ] || [ "${mode}" = "whitelist" ] || [ "${mode}" = "global" ]; then
+            if [ "${mode}" == "socks" ];then
+                exit 0
+            fi
+            if [ "${mode}" == "blacklist" ] || [ "${mode}" == "whitelist" ] || [ "${mode}" == "global" ]; then
                 del_tun
                 flush_rule_rules && flush_rules
                 log "info: iptables规则已清空."
