@@ -24,11 +24,14 @@ flush_rule_rules() {
 
 create_mangle_prerouting_chain() {
     ${iptables_wait} -t mangle -N CLASH_PRE
+    ${iptables_wait} -t mangle -A CLASH_PRE -j MARK --set-mark ${mark_id}
 
     ${iptables_wait} -t mangle -A CLASH_PRE -p tcp ! --dport 53 -j TPROXY --on-port ${Clash_tproxy_port}  && echo "" || log "err: 你的系统可能阉割了Tproxy-TCP"
     ${iptables_wait} -t mangle -A CLASH_PRE -p udp ! --dport 53 -j TPROXY --on-port ${Clash_tproxy_port}  && echo "" || log "err: 你的系统可能阉割了Tproxy-UDP"
     if [ "${ipv6}" = "true" ] ; then
         ${ip6tables_wait} -t mangle -N CLASH_PRE
+        ${ip6tables_wait} -t mangle -A CLASH_PRE -j MARK --set-mark ${mark_id}
+
 
         ${ip6tables_wait} -t mangle -A CLASH_PRE -p tcp ! --dport 53 -j TPROXY --on-port ${Clash_tproxy_port}  && echo "" || log "err: 你的系统可能阉割了Tproxy-TCP6"
         ${ip6tables_wait} -t mangle -A CLASH_PRE -p udp ! --dport 53 -j TPROXY --on-port ${Clash_tproxy_port}  && echo "" || log "err: 你的系统可能阉割了Tproxy-UDP6" 
@@ -350,17 +353,6 @@ set_tun(){
     done
     ${iptables_wait} -I FORWARD -o ${tun_device} -j ACCEPT
 	${iptables_wait} -I FORWARD -i ${tun_device} -j ACCEPT
-    if [ "${safe_ui}" = "true" ] ; then
-        ${iptables_wait} -A INPUT -s 127.0.0.1 -p tcp --dport ${Clash_ui_port} -j ACCEPT
-        ${iptables_wait} -A INPUT -p tcp --dport ${Clash_ui_port} -j DROP
-    fi
-    create_nat_prerouting_dns
-    create_nat_prerouting_filter
-
-    create_nat_output_dns
-    create_nat_output_filter
-    ${iptables_wait} -t nat -A PREROUTING -j FILTER_PRE_DNS
-    ${iptables_wait} -t nat -A OUTPUT -j FILTER_OUT_DNS
 
     ${iptables_wait} -t mangle -N CLASH_OUT
     ${iptables_wait} -t mangle -A CLASH_OUT -m owner --uid-owner ${Clash_user} --gid-owner ${Clash_group} -j RETURN
@@ -385,12 +377,13 @@ set_tun(){
          done
     fi
     ${iptables_wait} -t mangle -A OUTPUT -j CLASH_OUT
+
     ${iptables_wait} -t mangle -N CLASH_PRE
     for subnet in ${reserved_ip[*]} ; do
         ${iptables_wait} -t mangle -A CLASH_PRE -d ${subnet} -j RETURN
     done
     ${iptables_wait} -t mangle -A CLASH_PRE -j MARK --set-xmark ${mark_id}
-    ${iptables_wait} -t mangle -A PREROUTING ! --dport 53 -j CLASH_PRE
+    ${iptables_wait} -t mangle -A PREROUTING -j CLASH_PRE
 
     if [ "${ipv6}" = "true" ] ; then
         ip -6 rule add fwmark ${mark_id} table ${table_id} pref ${pref_id}
@@ -400,14 +393,7 @@ set_tun(){
         done
         ${ip6tables_wait} -I FORWARD -o ${tun_device} -j ACCEPT
         ${ip6tables_wait} -I FORWARD -i ${tun_device} -j ACCEPT
-        if [ "${safe_ui}" = "true" ] ; then
-            ${ip6tables_wait} -A INPUT -s 127.0.0.1 -p tcp --dport ${Clash_ui_port} -j ACCEPT
-            ${ip6tables_wait} -A INPUT -p tcp --dport ${Clash_ui_port} -j DROP
-        fi
 
-        ${ip6tables_wait} -t nat -A PREROUTING -j FILTER_PRE_DNS
-        ${ip6tables_wait} -t nat -A OUTPUT -j FILTER_OUT_DNS
-        
         ${ip6tables_wait} -t mangle -N CLASH_OUT
         ${ip6tables_wait} -t mangle -A CLASH_OUT -m owner --uid-owner ${Clash_user} --gid-owner ${Clash_group} -j RETURN
         for subnet in ${reserved_ip6[*]} ; do
@@ -424,12 +410,13 @@ set_tun(){
             done
         fi
         ${ip6tables_wait} -t mangle -I OUTPUT -j CLASH_OUT
+        
         ${ip6tables_wait} -t mangle -N CLASH_PRE
         for subnet in ${reserved_ip6[*]} ; do
             ${ip6tables_wait} -t mangle -A CLASH_PRE -d ${subnet} -j RETURN
         done
         ${ip6tables_wait} -t mangle -A CLASH_PRE -j MARK --set-xmark ${mark_id}
-        ${ip6tables_wait} -t mangle -A PREROUTING ! --dport 53 -j CLASH_PRE
+        ${ip6tables_wait} -t mangle -I PREROUTING -j CLASH_PRE
     else
         echo 1 > /proc/sys/net/ipv6/conf/${tun_device}/disable_ipv6
         echo dr
@@ -445,16 +432,13 @@ del_tun(){
 	${iptables_wait} -D FORWARD -i ${tun_device} -j ACCEPT
 
     ${iptables_wait} -t mangle -D OUTPUT -j CLASH_OUT
-    ${iptables_wait} -t nat -D PREROUTING -j FILTER_PRE_DNS
     ${iptables_wait} -t mangle -F CLASH_OUT
     ${iptables_wait} -t mangle -X CLASH_OUT
 
     ${iptables_wait} -t mangle -D PREROUTING -j CLASH_PRE
     ${iptables_wait} -t mangle -F CLASH_PRE
     ${iptables_wait} -t mangle -X CLASH_PRE
-    ${iptables_wait} -t nat -F FILTER_PRE_DNS
-    ${iptables_wait} -t nat -X FILTER_PRE_DNS
-    
+
     ip -6 rule del fwmark ${mark_id} lookup ${table_id}
     ip -6 route del default dev ${tun_device} table ${table_id}
         
@@ -462,20 +446,12 @@ del_tun(){
     ${ip6tables_wait} -D FORWARD -i ${tun_device} -j ACCEPT
 
     ${ip6tables_wait} -t mangle -D OUTPUT -j CLASH_OUT
-    if [ "${nat_kernel}" = "true" ] ; then
-        ${ip6tables_wait} -t nat -D PREROUTING -j FILTER_PRE_DNS
-    fi
-
     ${ip6tables_wait} -t mangle -F CLASH_OUT
     ${ip6tables_wait} -t mangle -X CLASH_OUT
 
     ${ip6tables_wait} -t mangle -D PREROUTING -j CLASH_PRE
     ${ip6tables_wait} -t mangle -F CLASH_PRE
     ${ip6tables_wait} -t mangle -X CLASH_PRE
-    if [ "${nat_kernel}" = "true" ] ; then
-        ${ip6tables_wait} -t nat -F FILTER_PRE_DNS
-        ${ip6tables_wait} -t nat -X FILTER_PRE_DNS
-    fi
 
     ${ip6tables_wait} -t mangle -D OUTPUT -j DROP
 }

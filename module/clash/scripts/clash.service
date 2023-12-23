@@ -86,17 +86,22 @@ start_clash() {
         rm -rf ${Clash_run_path}/root
         touch ${Clash_run_path}/root
         chmod 777 ${Clash_run_path}/root
-
-        if [ "${auto_updateGeoSite}" == "true" ]; then
-            echo "${update_geoXInterval} ${scripts_dir}/clash.tool -u" >> ${Clash_run_path}/root \
-            && log "info: 自动更新GeoX定时已开启."
+        if [ "${Geo_auto_update}" != "true"];then
+            if [ "${auto_updateGeoSite}" == "true" ]; then
+                echo "${update_geoXInterval} ${scripts_dir}/clash.tool -u" >> ${Clash_run_path}/root \
+                && log "info: 自动更新GeoX定时已开启."
+            fi
+        else
+            log "info: 核心已开启自动更新 模块不进行操作."
         fi
-
         if [ "${auto_updateSubcript}" == "true" ]; then
             echo "${update_subcriptInterval} ${scripts_dir}/clash.tool -s" >> ${Clash_run_path}/root \
             && log "info: 自动更新订阅定时已开启."
         fi
-        if [ "${auto_updateclashMeta}" == "true" ]; then
+        if [ "${auto_updateclashMeta}" == "true" ] || [ "${Geo_auto_update}" != "true"]; then
+            echo "${update_geoXInterval} ${scripts_dir}/clash.tool -u" >> ${Clash_run_path}/root \
+            && log "info: 自动更新clashMeta内核定时已开启."
+        else
             log "info: 自动更新clashMeta内核定时已开启."
         fi
 
@@ -108,7 +113,7 @@ start_clash() {
     else
         if [ ${Clash_bin_name} == "clashMeta" ];then
             log "err: ${Clash_bin_name}内核丢失. 正在更新.."
-            ${scripts_dir}/clash.tool -u
+            ${scripts_dir}/clash.tool -c
         else
             log "err: ${Clash_bin_name}内核丢失."
         fi

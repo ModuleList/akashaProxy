@@ -12,6 +12,8 @@ mode: rule
 log-level: info
 ipv6: true
 tcp-concurrent: true
+geo-auto-update: true
+geo-update-interval: 24
 geox-url:
   geoip: "https://jsd.onmicrosoft.cn/gh/Loyalsoldier/geoip@release/geoip.dat"
   geosite: "https://jsd.onmicrosoft.cn/gh/Loyalsoldier/v2ray-rules-dat@release/geosite.dat"

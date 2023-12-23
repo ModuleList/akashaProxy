@@ -67,11 +67,12 @@ monitor_local_ipv4() {
 }
 
 restart_clash() {
-     ${scripts_dir}/clash.service -k && ${scripts_dir}/clash.iptables -k
+    ${scripts_dir}/clash.service -k && ${scripts_dir}/clash.iptables -k
     ${scripts_dir}/clash.service -s && ${scripts_dir}/clash.iptables -s
     if [ "$?" == "0" ]; then
         log "info: 内核成功重启."
     else
+        ${scripts_dir}/clash.service -k && ${scripts_dir}/clash.iptables -k
         log "err: 内核重启失败."
         exit 1
     fi
@@ -161,9 +162,16 @@ check_clash_ver() {
     elif [[ ${local_clash_ver} == "" ]];then
         log "err: 获取本地版本失败, 最新版为: ${remote_clash_ver}"
         upgrade_clash
+        if [ "$?" = "0" ]; then
+            flag=true
+        fi
     else
         log "info: 本地版本为: ${local_clash_ver}, 最新版为: ${remote_clash_ver}"
         upgrade_clash
+        if [ "$?" = "0" ]; then
+            flag=true
+        fi
+
     fi
 
     unset local_clash_ver
@@ -206,7 +214,7 @@ find_packages_uid() {
     fi
     for package in $uids; do
         if [ "${Clash_enhanced_mode}" == "fake-ip" ] && [ "${Clash_tun_status}" != "true" ]; then
-            log "war: Tproxy_fake-ip下禁用黑白名单."
+            log "warn: Tproxy模式下fake-ip不可使用黑白名单."
             exit 1
         fi
         nhd=$(awk -F ">" '/^[0-9]+>$/{print $1}' <<< "${package}")
@@ -262,29 +270,18 @@ port_detection() {
 
 update_pre() {
     flag=false
-
-    if [ ${auto_updateGeoIP} == "true" ]; then
-        update_file ${Clash_GeoIP_file} ${GeoIP_url}
-        if [ "$?" = "0" ]; then
-            flag=true
-        fi
-    fi
-
-    if [ ${auto_updateGeoSite} == "true" ]; then
-        update_file ${Clash_GeoSite_file} ${GeoSite_url}
-        if [ "$?" = "0" ]; then
-            flag=true
+    if [ $Geo_auto_update != "true" ];then
+        if [ ${auto_updateGeoIP} == "true" ] && [ ${auto_updateGeoSite} == "true" ]; then
+            curl -X POST -d '{"path": "", "payload": ""}' http://127.0.0.1:${Clash_ui_port}/configs/geo
         fi
     fi
     if [ ${auto_updateclashMeta} == "true" ]; then
-            check_clash_ver
-            if [ "$?" = "0" ]; then
-                flag=true
-            fi
-        fi
+        check_clash_ver
+    fi
     if [ -f "${Clash_pid_file}" ] && [ ${flag} == true ]; then
         restart_clash
     fi
+
 }
 
 limit_clash() {
@@ -309,11 +306,13 @@ limit_clash() {
 
 while getopts ":kfmpusl" signal; do
     case ${signal} in
+    c)
+        check_clash_ver
+        ;;
     u)
         update_pre
         ;;
     s)
-        flag=false
         if [ ${auto_updateSubcript} == "true" ]; then
             curl -X PUT -d '{"configs": ["${temporary_config_file}"]}' http://127.0.0.1:${Clash_ui_port}/configs?force=true
         fi
