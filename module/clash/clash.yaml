@@ -43,19 +43,9 @@ tun:
   # auto-route: true
   # auto-detect-interface: true
 
-# 开启adguard home使用这一套dns配置 1053端口为你adguardhome端口
-# dns:
-  # enable: true
-  # listen: 127.0.0.1:53
-  # ipv6: true
-  # default-nameserver:
-   # - 127.0.0.1:1053
-  # nameserver:
-   # - 127.0.0.1:1053
-
 dns:
   enable: true
-  listen: 127.0.0.1:53
+  listen: 0.0.0.0:53
   nameserver-policy:
     "geosite:cn,geoip:cn,private":
       - https://doh.pub/dns-query

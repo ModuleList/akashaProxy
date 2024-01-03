@@ -279,7 +279,9 @@ update_pre() {
         check_clash_ver
     fi
     if [ -f "${Clash_pid_file}" ] && [ ${flag} == true ]; then
-        restart_clash
+        if [ "${restart_update}" == "true" ];then
+            restart_clash
+        fi
     fi
 
 }
