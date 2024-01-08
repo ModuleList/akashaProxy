@@ -25,6 +25,11 @@ update_file() {
 
 start_clash() {
     mkdir -p ${Clash_run_path}
+    if [[ $(magisk -v | grep "delta") ]] && [[ $(magisk -v | grep "kitsune") ]];then
+        log "info: 不支持 magisk delta与magisk kitsune"
+        exit 1
+    fi
+
     if [ ${adguard} == "true" ];then
         if [ ! -f "${Adguard_bin_path}" ];then
             log "err: 已开启 AdGuard Home 拓展但未找到 AdGuard Home 文件!"

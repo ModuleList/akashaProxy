@@ -474,6 +474,10 @@ del_tun(){
 while getopts ":sk" signal ; do
     case ${signal} in
         s)
+            if [[ $(magisk -v | grep "delta") ]] && [[ $(magisk -v | grep "kitsune") ]];then
+                log "info: 不支持 magisk delta与magisk kitsune"
+                exit 1
+            fi
             if [ "${mode}" == "socks" ] && [ "${Clash_tun_status}" == "true" ];then
                 log "warn: 当socks模式下不可开启Tun."
                 exit 0
