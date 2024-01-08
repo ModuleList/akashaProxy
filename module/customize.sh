@@ -1,29 +1,34 @@
 #!/system/bin/sh
 SKIPUNZIP=1
 
-ui_print "- Magisk ver: $MAGISK_VER"
-if [[ $($MAGISK_VER | grep "kitsune") ]] && [[ $($MAGISK_VER | grep "delta") ]]; then
-    ui_print "*********************************************************"
-    ui_print "Magisk delta and magisk kitsune are not supported"
-    echo "">remove
-    abort "*********************************************************"
+if [ ! $KSU ];then
+    ui_print "- Magisk ver: $MAGISK_VER"
+    if [[ $($MAGISK_VER | grep "kitsune") ]] && [[ $($MAGISK_VER | grep "delta") ]]; then
+        ui_print "*********************************************************"
+        ui_print "Magisk delta and magisk kitsune are not supported"
+        echo "">remove
+        abort "*********************************************************"
+    fi
+    
+    ui_print "- Magisk version: $MAGISK_VER_CODE"
+    if [ "$MAGISK_VER_CODE" -lt 26301 ]; then
+        ui_print "*********************************************************"
+        ui_print "! Please use Magisk alpha 26301+"
+        abort "*********************************************************"
+    fi
+elif [ $KSU ];then
+    ui_print "- KernelSU version: $KSU_KERNEL_VER_CODE (kernel) + $KSU_VER_CODE (ksud)"
+    if ! [ "$KSU_KERNEL_VER_CODE" ] || [ "$KSU_KERNEL_VER_CODE" -lt 11413 ]; then
+        ui_print "*********************************************************"
+        ui_print "! KernelSU version is too old!"
+        ui_print "! Please update KernelSU to latest version"
+        abort "*********************************************************"
+    fi
+else
+    ui_print "unknown root manager"
+    ui_print "$(set)"
+    abort
 fi
-
-ui_print "- Magisk version: $MAGISK_VER_CODE"
-if [ "$MAGISK_VER_CODE" -lt 26301 ]; then
-    ui_print "*********************************************************"
-    ui_print "! Please use Magisk alpha 26301+"
-    abort "*********************************************************"
-fi
-
-ui_print "- KernelSU version: $KSU_KERNEL_VER_CODE (kernel) + $KSU_VER_CODE (ksud)"
-if ! [ "$KSU_KERNEL_VER_CODE" ] || [ "$KSU_KERNEL_VER_CODE" -lt 11413 ]; then
-    ui_print "*********************************************************"
-    ui_print "! KernelSU version is too old!"
-    ui_print "! Please update KernelSU to latest version"
-    abort "*********************************************************"
-fi
-
 status=""
 architecture=""
 system_gid="1000"
