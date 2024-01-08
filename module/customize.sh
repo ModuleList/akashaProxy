@@ -56,11 +56,6 @@ rm -rf ${MODPATH}/clashkernel
 
 ui_print "- Start setting permissions."
 set_perm_recursive ${MODPATH} 0 0 0755 0755
-set_perm  ${MODPATH}/system/bin/setcap  0  0  0755
-set_perm  ${MODPATH}/system/bin/getcap  0  0  0755
-set_perm  ${MODPATH}/system/bin/getpcaps  0  0  0755
-set_perm  ${MODPATH}${ca_path}/cacert.pem 0 0 0644
-set_perm  ${MODPATH}/system/bin/curl 0 0 0755
 set_perm_recursive ${clash_data_dir} ${system_uid} ${system_gid} 0755 0644
 set_perm_recursive ${clash_data_dir}/scripts ${system_uid} ${system_gid} 0755 0755
 set_perm_recursive ${clash_data_dir}/clashkernel ${system_uid} ${system_gid} 6755 6755

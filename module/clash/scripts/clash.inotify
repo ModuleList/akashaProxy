@@ -1,7 +1,7 @@
 #!/system/bin/sh
 
-export PATH=$PATH:${busybox_path}
 scripts=`realpath $0`
+. /data/clash/clash.config
 scripts_dir=`dirname ${scripts}`
 service_path="${scripts_dir}/clash.service"
 tproxy_path="${scripts_dir}/clash.iptables"

@@ -365,10 +365,24 @@ set_tun(){
     ${iptables_wait} -t mangle -A OUTPUT -j CLASH_OUT
 
     ${iptables_wait} -t mangle -N CLASH_PRE
+    ${iptables_wait} -t mangle -A CLASH_PRE -m owner --uid-owner ${Clash_user} --gid-owner ${Clash_group} -j RETURN
+
     for subnet in ${reserved_ip[*]} ; do
         ${iptables_wait} -t mangle -A CLASH_PRE -d ${subnet} -j RETURN
     done
-    ${iptables_wait} -t mangle -A CLASH_PRE -j MARK --set-xmark ${mark_id}
+
+    if [ "${mode}" = "blacklist" ] ; then
+        for appuid in ${apps} ; do
+            ${iptables_wait} -t mangle -A CLASH_PRE -m owner --uid-owner ${appuid} -j RETURN
+        done
+        ${iptables_wait} -t mangle -A CLASH_PRE -j MARK --set-xmark ${mark_id}
+    elif [ "${mode}" = "whitelist" ] ; then
+        for appuid in  ${apps} ; do
+            ${iptables_wait} -t mangle -A CLASH_PRE -m owner --uid-owner ${appuid} -j MARK --set-xmark ${mark_id}
+         done
+    fi
+
+    # ${iptables_wait} -t mangle -A CLASH_PRE -j MARK --set-xmark ${mark_id}
     ${iptables_wait} -t mangle -A PREROUTING -j CLASH_PRE
 
     if [ "${ipv6}" = "true" ] ; then
@@ -398,10 +412,24 @@ set_tun(){
         ${ip6tables_wait} -t mangle -I OUTPUT -j CLASH_OUT
         
         ${ip6tables_wait} -t mangle -N CLASH_PRE
+        ${ip6tables_wait} -t mangle -A CLASH_PRE -m owner --uid-owner ${Clash_user} --gid-owner ${Clash_group} -j RETURN
+
         for subnet in ${reserved_ip6[*]} ; do
             ${ip6tables_wait} -t mangle -A CLASH_PRE -d ${subnet} -j RETURN
         done
-        ${ip6tables_wait} -t mangle -A CLASH_PRE -j MARK --set-xmark ${mark_id}
+        
+        if [ "${mode}" = "blacklist" ] ; then
+            for appuid in ${apps} ; do
+                ${ip6tables_wait} -t mangle -A CLASH_PRE -m owner --uid-owner ${appuid} -j RETURN
+            done
+            ${ip6tables_wait} -t mangle -A CLASH_PRE -j MARK --set-xmark ${mark_id}
+        elif [ "${mode}" = "whitelist" ] ; then
+            for appuid in  ${apps} ; do
+                ${ip6tables_wait} -t mangle -A CLASH_PRE -m owner --uid-owner ${appuid} -j MARK --set-xmark ${mark_id}
+             done
+        fi
+    
+        # ${ip6tables_wait} -t mangle -A CLASH_PRE -j MARK --set-xmark ${mark_id}
         ${ip6tables_wait} -t mangle -I PREROUTING -j CLASH_PRE
     else
         echo 1 > /proc/sys/net/ipv6/conf/${tun_device}/disable_ipv6
@@ -424,22 +452,23 @@ del_tun(){
     ${iptables_wait} -t mangle -D PREROUTING -j CLASH_PRE
     ${iptables_wait} -t mangle -F CLASH_PRE
     ${iptables_wait} -t mangle -X CLASH_PRE
-
-    ip -6 rule del fwmark ${mark_id} lookup ${table_id}
-    ip -6 route del default dev ${tun_device} table ${table_id}
-        
-    ${ip6tables_wait} -D FORWARD -o ${tun_device} -j ACCEPT
-    ${ip6tables_wait} -D FORWARD -i ${tun_device} -j ACCEPT
-
-    ${ip6tables_wait} -t mangle -D OUTPUT -j CLASH_OUT
-    ${ip6tables_wait} -t mangle -F CLASH_OUT
-    ${ip6tables_wait} -t mangle -X CLASH_OUT
-
-    ${ip6tables_wait} -t mangle -D PREROUTING -j CLASH_PRE
-    ${ip6tables_wait} -t mangle -F CLASH_PRE
-    ${ip6tables_wait} -t mangle -X CLASH_PRE
-
-    ${ip6tables_wait} -t mangle -D OUTPUT -j DROP
+    if [ "${ipv6}" = "true" ] ; then
+        ip -6 rule del fwmark ${mark_id} lookup ${table_id}
+        ip -6 route del default dev ${tun_device} table ${table_id}
+            
+        ${ip6tables_wait} -D FORWARD -o ${tun_device} -j ACCEPT
+        ${ip6tables_wait} -D FORWARD -i ${tun_device} -j ACCEPT
+    
+        ${ip6tables_wait} -t mangle -D OUTPUT -j CLASH_OUT
+        ${ip6tables_wait} -t mangle -F CLASH_OUT
+        ${ip6tables_wait} -t mangle -X CLASH_OUT
+    
+        ${ip6tables_wait} -t mangle -D PREROUTING -j CLASH_PRE
+        ${ip6tables_wait} -t mangle -F CLASH_PRE
+        ${ip6tables_wait} -t mangle -X CLASH_PRE
+    
+        ${ip6tables_wait} -t mangle -D OUTPUT -j DROP
+    fi
 }
 
 while getopts ":sk" signal ; do
@@ -456,10 +485,13 @@ while getopts ":sk" signal ; do
                     if [ "${Clash_tun_status}" == "true" ]; then
                         log "info: 当前为:Tun模式."
                         if [ "${Clash_auto_route}" == "true" ]; then
+                            log "info: auto_route已开启"
                             ${iptables_wait} -I FORWARD -o ${tun_device} -j ACCEPT
                             ${iptables_wait} -I FORWARD -i ${tun_device} -j ACCEPT
-                            ${ip6tables_wait} -I FORWARD -o ${tun_device} -j ACCEPT
-                            ${ip6tables_wait} -I FORWARD -i ${tun_device} -j ACCEPT
+                            if [ "${ipv6}" = "true" ] ; then
+                                ${ip6tables_wait} -I FORWARD -o ${tun_device} -j ACCEPT
+                                ${ip6tables_wait} -I FORWARD -i ${tun_device} -j ACCEPT
+                            fi
                             exit 0
                         else
                             set_tun
