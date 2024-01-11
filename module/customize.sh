@@ -1,5 +1,4 @@
 #!/system/bin/sh
-SKIPUNZIP=0
 
 if [ ! $KSU ];then
     ui_print "- Magisk ver: $MAGISK_VER"
@@ -84,7 +83,6 @@ mv -f ${MODPATH}/clash/* ${clash_data_dir}/
 rm -rf ${MODPATH}/clash
 rm -rf ${MODPATH}/bin
 rm -rf ${MODPATH}/clashkernel
-rm -f ${MODPATH}/customize.sh
 
 ui_print "- Start setting permissions."
 set_perm_recursive ${MODPATH} 0 0 0755 0755
@@ -125,4 +123,3 @@ ui_print "Telegram Channel: @wtdnwbzda"
 ui_print ""
 ui_print "In order to allow you to read the above message, the installation progress is paused for 5 seconds!"
 sleep 5
-exit 0
