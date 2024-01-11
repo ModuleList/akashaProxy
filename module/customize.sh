@@ -84,6 +84,7 @@ mv -f ${MODPATH}/clash/* ${clash_data_dir}/
 rm -rf ${MODPATH}/clash
 rm -rf ${MODPATH}/bin
 rm -rf ${MODPATH}/clashkernel
+rm -f ${MODPATH}/customize.sh
 
 ui_print "- Start setting permissions."
 set_perm_recursive ${MODPATH} 0 0 0755 0755
