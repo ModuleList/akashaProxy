@@ -1,5 +1,5 @@
 #!/system/bin/sh
-SKIPUNZIP=1
+SKIPUNZIP=0
 
 if [ ! $KSU ];then
     ui_print "- Magisk ver: $MAGISK_VER"
@@ -25,7 +25,7 @@ elif [ $KSU ];then
         abort "*********************************************************"
     fi
 else
-    ui_print "unknown root manager"
+    ui_print "! Unknown Module Manager"
     ui_print "$(set)"
     abort
 fi
@@ -50,8 +50,7 @@ if [ ! -f ${clash_data_dir}/clashkernel/clashMeta ];then
             mv -f ${clash_data_dir}/clashkernel/clashMeta-android-${ABI} ${clash_data_dir}/clashkernel/clashMeta
         else
             ui_print "Your architecture was not found: ${ABI}"
-            ui_print "Please use 'make default' to compile clashMeta for ${ABI} architecture"
-            abort 1
+            abort "Please use 'make default' to compile clashMeta for ${ABI} architecture"
         fi
     fi
 fi
@@ -59,29 +58,31 @@ fi
 unzip -o "${ZIPFILE}" -x 'META-INF/*' -d ${MODPATH} >&2
 
 if [ -f "${clash_data_dir}/config.yaml" ];then
-    ui_print "-config.yaml The file already exists. Do not add the default file."
+    ui_print "- config.yaml The file already exists. Do not add the default file."
     rm -rf ${MODPATH}/config.yaml
 else
-    ui_print "-config.yaml The file not exists. Do add the default file."
+    ui_print "- config.yaml The file not exists. Do add the default file."
 fi
 
 if [ -f "${clash_data_dir}/clash.yaml" ];then
-    ui_print "-clash.yaml The file already exists. Do not add the default file."
+    ui_print "- clash.yaml The file already exists. Do not add the default file."
     rm -rf ${MODPATH}/clash.yaml
 else
-    ui_print "-clash.yaml The file not exists. Do add the default file."
+    ui_print "- clash.yaml The file not exists. Do add the default file."
 fi
 
 if [ -f "${clash_data_dir}/packages.list" ];then
     if [ "${config}" == "false" ];then
-        ui_print "-packages.list The file already exists. Do not add the default file."
+        ui_print "- packages.list The file already exists. Do not add the default file."
         rm -rf ${MODPATH}/packages.list
     fi
 else
-    ui_print "-packages.list The file not exists. Do add the default file."
+    ui_print "- packages.list The file not exists. Do add the default file."
 fi
 
 mv -f ${MODPATH}/clash/* ${clash_data_dir}/
+rm -rf ${MODPATH}/clash
+rm -rf ${MODPATH}/bin
 rm -rf ${MODPATH}/clashkernel
 
 ui_print "- Start setting permissions."
@@ -119,7 +120,8 @@ ui_print "## Module path:
 │   ├── //yacd-Meta
 └── DeleteCache.sh
 ```"
-ui_print "telegram channel: @wtdnwbzda"
+ui_print "Telegram Channel: @wtdnwbzda"
 ui_print ""
 ui_print "In order to allow you to read the above message, the installation progress is paused for 5 seconds!"
 sleep 5
+exit 0
