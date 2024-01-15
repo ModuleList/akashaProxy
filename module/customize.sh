@@ -28,6 +28,18 @@ else
     ui_print "$(set)"
     abort
 fi
+
+ui_print "- Extracting verify.sh"
+unzip -o "$ZIPFILE" 'verify.sh' -d "$TMPDIR" >&2
+if [ ! -f "$TMPDIR/verify.sh" ]; then
+  ui_print "*********************************************************"
+  ui_print "! Unable to extract verify.sh!"
+  ui_print "! This zip may be corrupted, please try downloading again"
+  abort    "*********************************************************"
+fi
+. "$TMPDIR/verify.sh"
+
+
 status=""
 architecture=""
 system_gid="1000"
@@ -40,6 +52,7 @@ mkdir -p ${clash_data_dir}/run
 mkdir -p ${clash_data_dir}/clashkernel
 
 if [ ! -f ${clash_data_dir}/clashkernel/clashMeta ];then
+    unzip -o "$ZIPFILE" 'bin/*' -d "$TMPDIR" >&2
     if [ -f "${MODPATH}/bin/clashMeta-android-${ABI}.tar.bz2" ];then
         tar -xjf ${MODPATH}/bin/clashMeta-android-${ABI}.tar.bz2 -C ${clash_data_dir}/clashkernel/
         mv -f ${clash_data_dir}/clashkernel/clashMeta-android-${ABI} ${clash_data_dir}/clashkernel/clashMeta
