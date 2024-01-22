@@ -1,0 +1,72 @@
+name: "Bug"
+description: 问题报告.
+title: "[BUG] <问题标题>"
+labels: [
+  "bug"
+]
+body:
+
+  - type: checkboxes
+    id: check
+    attributes:
+      label: 须知
+      description: |
+        请确认已经遵守所有必选项，否则不排除将直接关闭 Issue
+        提交 Issue 前请确认当前为[akashaProxy CI](https://github.com/ModuleList/akashaProxy/actions)发布的最新版
+      options:
+        - label: 我确认最新版依然存在此问题.
+          required: true
+
+        - label: 我已排查确认是由本模块造成，而不是clash或者自带的mosdns/AdGuardhome.
+          required: true
+
+  - type: dropdown
+    id: browsers
+    attributes:
+      label: 你的使用的root管理器是？
+      multiple: false
+      options:
+        - Magisk release
+        - KernelSU
+        - Magisk Alpha
+        - apatch
+    validations:
+      required: true
+
+  - type: textarea
+    id: description
+    attributes:
+      label: "问题描述"
+      description: 请输入简洁且明确的问题描述。
+      placeholder: ......
+    validations:
+      required: true
+
+  - type: textarea
+    id: log
+    attributes:
+      label: "模块日志"
+      description: root管理器日志+去敏后的clash运行日志(kernel.log)
+      placeholder: .......
+    validations:
+      required: true
+
+  - type: textarea
+    id: repord
+    attributes:
+      label: "复现步骤"
+      description: 输入简明的问题复现步骤。
+      value: .......
+      render: bash
+    validations:
+      required: false
+
+  - type: textarea
+    id: screenshot
+    attributes:
+      label: "问题截图"
+      description: 添加问题截图以便我们快速定位.
+      value: |
+        ![图片注释](图片链接)
+    validations:
+      required: false
