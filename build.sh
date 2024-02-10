@@ -1,1 +1,0 @@
-for file in $(find module);do  [ -f "$file" ] && sha256sum "$file" | awk '{print $1}' > "$file.sha256";done

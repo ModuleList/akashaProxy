@@ -97,6 +97,7 @@ keep_dns() {
 upgrade_clash() {
     log "开始下载 ${Clash_bin_name} 内核 更新速度取决于你的网速..."
     mkdir -p /data/clash/clashkernel/temp
+    remote_clash_ver=$1
     general_clash_filename="mihomo-android-arm64-"
     if [[ ${cgo} == "true" && ${go120} == "true" ]];then
         unset remote_clash_ver
@@ -161,13 +162,13 @@ check_clash_ver() {
         log "info: 当前为最新版: ${local_clash_ver}"
     elif [[ ${local_clash_ver} == "" ]];then
         log "err: 获取本地版本失败, 最新版为: ${remote_clash_ver}"
-        upgrade_clash
+        upgrade_clash $check_clash_ver
         if [ "$?" = "0" ]; then
             flag=true
         fi
     else
         log "info: 本地版本为: ${local_clash_ver}, 最新版为: ${remote_clash_ver}"
-        upgrade_clash
+        upgrade_clash $check_clash_ver
         if [ "$?" = "0" ]; then
             flag=true
         fi

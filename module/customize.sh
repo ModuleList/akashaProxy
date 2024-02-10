@@ -2,7 +2,7 @@
 
 if [ ! $KSU ];then
     ui_print "- Magisk ver: $MAGISK_VER"
-    if [[ $($MAGISK_VER | grep "kitsune") ]] && [[ $($MAGISK_VER | grep "delta") ]]; then
+    if [[ $($MAGISK_VER | grep "kitsune") ]] || [[ $($MAGISK_VER | grep "delta") ]]; then
         ui_print "*********************************************************"
         ui_print "Magisk delta and magisk kitsune are not supported"
         echo "">remove
@@ -28,16 +28,6 @@ else
     ui_print "$(set)"
     abort
 fi
-
-ui_print "- Extracting verify.sh"
-unzip -o "$ZIPFILE" 'verify.sh' -d "$TMPDIR" >&2
-if [ ! -f "$TMPDIR/verify.sh" ]; then
-  ui_print "*********************************************************"
-  ui_print "! Unable to extract verify.sh!"
-  ui_print "! This zip may be corrupted, please try downloading again"
-  abort    "*********************************************************"
-fi
-. "$TMPDIR/verify.sh"
 
 
 status=""

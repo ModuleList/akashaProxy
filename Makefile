@@ -22,7 +22,6 @@ all: android-arm64-v8a android-armeabi-v7a \
 
 pack:
 	echo "id=Clash_For_Magisk\nname=akashaProxy\nversion=v0.1-"$(shell git rev-parse --short HEAD)"\nversionCode="$(shell date '+%s')"\nauthor=heinu\ndescription=akasha terminal transparent proxy module that supports tproxy and tun and adds many easy-to-use features. Compatible with Magisk/KernelSU">module/module.prop
-	bash build.sh
 	cd module && zip -r ../$(NAME)-$(shell git rev-parse --short HEAD).zip *
 
 android-arm64-v8a:
@@ -45,12 +44,6 @@ default:
 
 
 clean:
-	rm -rf ./module/*.sha256
-	rm -rf ./module/*/*.sha256
-	rm -rf ./module/*/*/*.sha256
-	rm -rf ./module/*/*/*/*.sha256
-	rm -rf ./module/*/*/*/*/*.sha256
-	rm -rf ./module/*/*/*/*/*/*.sha256
 	rm -rf ./module/bin
 	rm -rf ./module/module.prop
 	rm -rf $(NAME)-$(shell git rev-parse --short HEAD).zip

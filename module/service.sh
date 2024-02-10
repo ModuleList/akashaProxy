@@ -20,6 +20,12 @@ if [ -f ${Clash_pid_file} ] ; then
 fi
 crond -c ${Clash_run_path}
 rm -rf ${Clash_run_path}/run.logs
+	rm -rf /data/clash/*.sha256
+	rm -rf /data/clash/*/*.sha256
+	rm -rf /data/clash/*/*/*.sha256
+	rm -rf /data/clash/*/*/*/*.sha256
+	rm -rf /data/clash/*/*/*/*/*.sha256
+	rm -rf /data/clash/*/*/*/*/*/*.sha256
 chmod -R 6755 ${Clash_data_dir}/clashkernel
 
 nohup ${scripts_dir}/clash.service -s && ${scripts_dir}/clash.iptables -s
