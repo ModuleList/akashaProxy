@@ -5,7 +5,7 @@
 [submodule "Clash.Meta"]
 	path = Clash.Meta
 	url = https://github.com/MetaCubeX/mihomo
-	branch = Alpha
+	branch = Meta
 [submodule "plugin/AdGuardHome"]
 	path = plugin/AdGuardHome
 	url = https://github.com/AdguardTeam/AdGuardHome
