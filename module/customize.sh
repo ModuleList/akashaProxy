@@ -86,6 +86,9 @@ mv -f ${MODPATH}/clash/* ${clash_data_dir}/
 rm -rf ${MODPATH}/clash
 rm -rf ${MODPATH}/bin
 rm -rf ${MODPATH}/clashkernel
+if [ $KSU ];then
+    ln -s ${clash_data_dir}/yacd ${MODPATH}/webroot
+fi
 
 ui_print "- Start setting permissions."
 set_perm_recursive ${MODPATH} 0 0 0755 0755
