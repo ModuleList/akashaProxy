@@ -48,12 +48,12 @@ https://clash-meta.wiki
 
 start:
 ```
-/data/clash/clash.service -s && /data/clash/clash.iptables -s
+/data/clash/scripts/clash.service -s && /data/clash/scripts/clash.iptables -s
 ```
 
 stop:
 ```
-/data/clash/clash.service -k && /data/clash/clash.iptables -k
+/data/clash/scripts/clash.service -k && /data/clash/scripts/clash.iptables -k
 ```
 
 You can also use [dashboard](https://t.me/MagiskChangeKing)
