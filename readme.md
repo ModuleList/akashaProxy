@@ -7,24 +7,36 @@
 ## Module path:
 
 **Work path: /data/clash/**
+
+`clash.config` : Module start config
+
+`clash.yaml` : Clash config(global configuration and dns configuration)
+
+`config.yaml` : Clash config(other)
+
+`packages.list` : proxy black/white list packages list
+
+Admin panel: 127.0.0.1:9090/ui (default)
+
+
 ```
 ├── adguard
-│   ├── // AdGuardHome module
-├── clash.config (clash start config)
-├── clash.yaml (clash config#1)
+│   ├── AdGuardHome // AdGuardHome bin
+├── clash.config
+├── clash.yaml
 ├── clashkernel
-│   ├── clashMeta //clash
-├── config.yaml (clash config#2)
-├── packages.list (black/white list packages list)
+│   ├── clashMeta //clash kernel
+├── config.yaml
+├── packages.list
 ├── mosdns
-│   ├── // mosdns module
+│   ├── mosdns // mosdns bin
 ├── scripts // clash start script
 │   ├── clash.inotify
 │   ├── clash.iptables
 │   ├── clash.service
 │   └── clash.tool 
 ├── yacd
-│   ├── //yacd-Meta
+│   ├── //yacd-Meta page
 └── DeleteCache.sh
 ```
 
@@ -32,6 +44,19 @@ clashMeta Tutorial:
 https://wiki.metacubex.one
 https://clash-meta.wiki
 
+## start and stop
+
+start:
+```
+/data/clash/clash.service -s && /data/clash/clash.iptables -s
+```
+
+stop:
+```
+/data/clash/clash.service -k && /data/clash/clash.iptables -k
+```
+
+You can also use [dashboard](https://t.me/MagiskChangeKing)
 
 ## build
 
