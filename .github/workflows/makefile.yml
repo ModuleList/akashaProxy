@@ -9,11 +9,10 @@ on:
 
 jobs:
   build:
-
     runs-on: ubuntu-latest
-
+    
     steps:
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@v4
 
     - name: Clone Submodules
       run: git submodule update --init --recursive
@@ -40,6 +39,11 @@ jobs:
         ndk-version: r26b
         add-to-path: true
 
+    - name: Setup Node.js
+      uses: actions/setup-node@v3
+      with:
+        node-version: '21.6.2'
+
     - name: Build Clash Meta - Arm64
       env:
         ANDROID_NDK_HOME: ${{ steps.setup-ndk.outputs.ndk-path }}
@@ -61,12 +65,16 @@ jobs:
     - name: Set ENV
       run: |
         echo "buildSha=$(git rev-parse --short HEAD)" >> $GITHUB_ENV
-        mkdir -p ${{ github.workspace }}/git_clone
-        git clone ${{ github.server_url }}/${{ github.repository }} ${{ github.workspace }}/git_clone -b ${{ github.ref_name }}
-        cd ${{ github.workspace }}/git_clone
-        text="$(git log ${{ github.event.before }}..${{ github.event.after }} --pretty=format:'%h %s')"
+
+    - name: Get Commit
+      run: |
+        text="${{ github.event.head_commit.message }}"
         echo "commit=$(echo $text | sed 's/\([][\\`.*^$\/+?{}()=!|:-]\)/\\\1/g')" >> $GITHUB_ENV
-          
+        
+    - name: Build WebUI
+      run: |
+        make build-webui
+       
     - name: Build Module
       id: build
       run: |

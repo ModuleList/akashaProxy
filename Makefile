@@ -18,7 +18,7 @@ BUILD=CGO_ENABLED=0 go build -tags with_gvisor -trimpath -ldflags '-X "github.co
 CHAT_ID ?= 0
 TELEGRAM_BOT_TOKEN ?= 0
 all: android-arm64-v8a android-armeabi-v7a \
-	pack
+	build-webui pack
 
 pack:
 	echo "id=Clash_For_Magisk\nname=akashaProxy\nversion=v0.1-"$(shell git rev-parse --short HEAD)"\nversionCode="$(shell date '+%s')"\nauthor=heinu\ndescription=akasha terminal transparent proxy module that supports tproxy and tun and adds many easy-to-use features. Compatible with Magisk/KernelSU">module/module.prop
@@ -42,7 +42,13 @@ default:
 	rm -rf ./module/bin/clashMeta-android-$@
 	cd module && zip -r ../$(NAME)-$(shell git rev-parse --short HEAD).zip *
 
+build-webui:
+	cd webui && yarn --frozen-lockfile && yarn build
+	mv -f ./webui/.vitepress/dist ./module/webroot
+
 clean:
+	rm -rf ./webui/node_modules
 	rm -rf ./module/bin
 	rm -rf ./module/module.prop
+	rm -rf ./module/webroot
 	rm -rf $(NAME)-$(shell git rev-parse --short HEAD).zip
