@@ -42,7 +42,6 @@ default:
 	rm -rf ./module/bin/clashMeta-android-$@
 	cd module && zip -r ../$(NAME)-$(shell git rev-parse --short HEAD).zip *
 
-
 clean:
 	rm -rf ./module/bin
 	rm -rf ./module/module.prop
