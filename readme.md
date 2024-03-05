@@ -73,3 +73,8 @@ run `make` Compile and package the module
 make
 ```
 > The armeabi-v7a architecture and arm64-v8a architecture are built by default under the android platform.
+
+## release
+
+[Telegram](https://t.me/akashaProxy)
+[Github Action(Need to decompress)](https://github.com/ModuleList/akashaProxy/actions)

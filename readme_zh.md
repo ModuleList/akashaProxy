@@ -76,3 +76,8 @@ https://clash-meta.wiki
 make
 ````
 > 默认构建android平台下armeabi-v7a架构和arm64-v8a架构
+
+## 发布
+
+[Telegram](https://t.me/akashaProxy)
+[Github工作流(需要解压)](https://github.com/ModuleList/akashaProxy/actions)
