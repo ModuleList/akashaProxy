@@ -44,7 +44,7 @@ default:
 
 build-webui:
 	cd webui && yarn --frozen-lockfile && yarn build
-	mv -f ./webui/.vitepress/dist ./module/webroot
+	mv -f ./webui/out ./module/webroot
 
 clean:
 	rm -rf ./webui/node_modules

@@ -1,10 +1,31 @@
 {
+  "name": "akashaproxy-webui",
+  "version": "0.1.0",
+  "private": true,
   "scripts": {
-    "dev": "vitepress dev",
-    "build": "vitepress build",
-    "preview": "vitepress preview"
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "next lint"
+  },
+  "dependencies": {
+    "@emotion/react": "^11.11.4",
+    "@emotion/styled": "^11.11.0",
+    "@mui/icons-material": "^5.15.11",
+    "@mui/material": "^5.15.11",
+    "@types/js-yaml": "^4.0.9",
+    "js-yaml": "^4.1.0",
+    "kernelsu": "^1.0.6",
+    "next": "14.1.1",
+    "react": "^18",
+    "react-dom": "^18"
   },
   "devDependencies": {
-    "vitepress": "^1.0.0-rc.44"
+    "@types/node": "^20",
+    "@types/react": "^18",
+    "@types/react-dom": "^18",
+    "eslint": "^8",
+    "eslint-config-next": "14.1.1",
+    "typescript": "^5"
   }
 }
