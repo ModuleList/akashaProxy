@@ -36,7 +36,7 @@ system_gid="1000"
 system_uid="1000"
 clash_data_dir="/data/clash"
 modules_dir="/data/adb/modules"
-config="true" #更新是否替换clash.config
+config="false" #更新是否替换clash.config
 ABI=$(getprop ro.product.cpu.abi)
 mkdir -p ${clash_data_dir}/run
 mkdir -p ${clash_data_dir}/clashkernel
@@ -66,13 +66,18 @@ fi
 
 if [ -f "${clash_data_dir}/clash.yaml" ];then
     ui_print "- clash.yaml 文件已存在 跳过覆盖."
-    rm -rf ${MODPATH}/clash.yaml
+    rm -rf ${MODPATH}/clash/clash.yaml
 fi
 
 if [ -f "${clash_data_dir}/packages.list" ];then
-    if [ "${config}" == "false" ];then
         ui_print "- packages.list 文件已存在 跳过覆盖."
-        rm -rf ${MODPATH}/packages.list
+        rm -rf ${MODPATH}/clash/packages.list
+fi
+
+if [ -f "${clash_data_dir}/clash.config" ];then
+    if [ "${config}" == "false" ];then
+        ui_print "- clash.config 文件已存在 跳过覆盖."
+        rm -rf ${MODPATH}/clash/clash.config
     fi
 fi
 
