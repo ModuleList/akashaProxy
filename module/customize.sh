@@ -66,7 +66,7 @@ unzip -o "${ZIPFILE}" -x 'clash/*' -d ${MODPATH} >&2
 
 if [ -f "${clash_data_dir}/config.yaml" ];then
     ui_print "- config.yaml 文件已存在 跳过覆盖."
-    rm -rf ${MODPATH}/config.yaml
+    rm -rf ${MODPATH}/clash/config.yaml
 fi
 
 if [ -f "${clash_data_dir}/clash.yaml" ];then
