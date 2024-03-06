@@ -110,17 +110,18 @@ jobs:
     - name: Pack Module armAll
       run: |
         make pack
+        mv akashaProxy.zip akashaProxy-armAll.zip
         
     - name: Upload armAll
       uses: actions/upload-artifact@main
       with:
         name: akashaProxy-armAll.zip
-        path: akashaProxy.zip
+        path: akashaProxy-armAll.zip
         compression-level: 0
 
     - name: Find ZIP
       run: |
-        echo "ZIP_FILE=$(find . -name 'akashaProxy.zip')" >> $GITHUB_ENV
+        echo "ZIP_FILE=$(find . -name 'akashaProxy-armAll.zip')" >> $GITHUB_ENV
 
     - name: Post to Telegram Channel
       if: github.event_name != 'pull_request' && github.ref == 'refs/heads/master'
@@ -134,7 +135,7 @@ jobs:
           `${{ env.commit }}`
           
           by ${{ github.event.head_commit.author.name }}
-          For more architecture see [action](${{ env.GITHUB_SERVER_URL }}/${{ env.GITHUB_REPOSITORY }}/actions/runs/${{ env.GITHUB_RUN_ID }})
+          For more architecture see [action](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ env.github_run_id }})
           See commit detail [here](${{ github.event.head_commit.url }})
       run: |
         ESCAPED=$(python3 -c 'import json,os,urllib.parse; print(urllib.parse.quote(json.dumps(os.environ["COMMIT_MESSAGE"])))')
