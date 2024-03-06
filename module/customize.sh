@@ -1,4 +1,8 @@
 #!/system/bin/sh
+SKIPUNZIP=1
+MIN_KSU_VERSION=11563
+MIN_KSUD_VERSION=11563
+MIN_MAGISK_VERSION=26402
 
 if [ ! $KSU ];then
     ui_print "- Magisk ver: $MAGISK_VER"
@@ -10,14 +14,14 @@ if [ ! $KSU ];then
     fi
     
     ui_print "- Magisk version: $MAGISK_VER_CODE"
-    if [ "$MAGISK_VER_CODE" -lt 26301 ]; then
+    if [ "$MAGISK_VER_CODE" -lt MIN_MAGISK_VERSION ]; then
         ui_print "*********************************************************"
         ui_print "! 请使用 Magisk alpha 26301+"
         abort "*********************************************************"
     fi
 elif [ $KSU ];then
     ui_print "- KernelSU version: $KSU_KERNEL_VER_CODE (kernel) + $KSU_VER_CODE (ksud)"
-    if ! [ "$KSU_KERNEL_VER_CODE" ] || [ "$KSU_KERNEL_VER_CODE" -lt 11563 ]; then
+    if ! [ "$KSU_KERNEL_VER_CODE" ] || [ "$KSU_KERNEL_VER_CODE" -lt $MIN_KSU_VERSION ] || [ "$KSU_VER_CODE" -lt $MIN_KSUD_VERSION ]; then
         ui_print "*********************************************************"
         ui_print "! KernelSU 版本太旧!"
         ui_print "! 请将 KernelSU 更新到最新版本"
@@ -58,6 +62,7 @@ if [ ! -f ${clash_data_dir}/clashkernel/clashMeta ];then
 fi
 
 unzip -o "${ZIPFILE}" -x 'META-INF/*' -d ${MODPATH} >&2
+unzip -o "${ZIPFILE}" -x 'clash/*' -d ${MODPATH} >&2
 
 if [ -f "${clash_data_dir}/config.yaml" ];then
     ui_print "- config.yaml 文件已存在 跳过覆盖."

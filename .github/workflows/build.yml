@@ -22,9 +22,11 @@ jobs:
         sudo timedatectl set-timezone "Asia/Shanghai"
         VERSION=$(cd Clash.Meta && git rev-parse --short HEAD)
         BUILDTIME=$(date -u)
-        echo "TAGS=with_gvisor,with_lwip" >> $GITHUB_ENV
+        echo "TAGS=with_gvisor" >> $GITHUB_ENV
         echo "LDFLAGS=-X 'github.com/metacubex/mihomo/constant.Version=${VERSION}' -X 'github.com/metacubex/mihomo/constant.BuildTime=${BUILDTIME}' -w -s -buildid=" >> $GITHUB_ENV
         [ ! -f module/bin ] && mkdir module/bin
+        text="${{ github.event.head_commit.message }}"
+        echo "commit=$(echo $text | sed 's/\([][\\`.*^$\/+?{}()=!|:-]\)/\\\1/g')" >> $GITHUB_ENV
 
     - name: Setup Go
       uses: actions/setup-go@v4
@@ -44,53 +46,81 @@ jobs:
       with:
         node-version: '21.6.2'
 
+    - name: Build WebUI
+      run: |
+        make build-webui
+
     - name: Build Clash Meta - Arm64
       env:
         ANDROID_NDK_HOME: ${{ steps.setup-ndk.outputs.ndk-path }}
       run: |
         cd Clash.Meta
         CC=${ANDROID_NDK_HOME}/toolchains/llvm/prebuilt/linux-x86_64/bin/aarch64-linux-android33-clang
-        CGO_ENABLED=1 CC=${CC} GOARCH=arm64 GOOS=android go build -tags ${TAGS} -trimpath -ldflags "${LDFLAGS}" -o ../module/bin/clashMeta-android-arm64-v8a
+        CGO_ENABLED=0 CC=${CC} GOARCH=arm64 GOOS=android go build -tags ${TAGS} -trimpath -ldflags "${LDFLAGS}" -o ../module/bin/clashMeta-android-arm64-v8a
         cd ../module/bin && tar -vcjf clashMeta-android-arm64-v8a.tar.bz2 clashMeta-android-arm64-v8a && rm -rf clashMeta-android-arm64-v8a
+
+    - name: Pack Module Arm64
+      run: |
+        make pack
+
+    - name: Upload arm64
+      uses: actions/upload-artifact@main
+      with:
+        name: akashaProxy-arm64.zip
+        path: akashaProxy.zip
+        compression-level: 0
 
     - name: Build Clash Meta - Armv7a
       env:
         ANDROID_NDK_HOME: ${{ steps.setup-ndk.outputs.ndk-path }}
       run: |
+        make clean-cache-build
         cd Clash.Meta
         CC=${ANDROID_NDK_HOME}/toolchains/llvm/prebuilt/linux-x86_64/bin/armv7a-linux-androideabi33-clang
-        CGO_ENABLED=1 CC=${CC} GOARCH=arm GOOS=android go build -tags ${TAGS} -trimpath -ldflags "${LDFLAGS}" -o ../module/bin/clashMeta-android-armeabi-v7a
+        CGO_ENABLED=0 CC=${CC} GOARCH=arm GOOS=android go build -tags ${TAGS} -trimpath -ldflags "${LDFLAGS}" -o ../module/bin/clashMeta-android-armeabi-v7a
         cd ../module/bin && tar -vcjf clashMeta-android-armeabi-v7a.tar.bz2 clashMeta-android-armeabi-v7a && rm -rf clashMeta-android-armeabi-v7a
 
-    - name: Set ENV
+    - name: Pack Module Arm32
       run: |
-        echo "buildSha=$(git rev-parse --short HEAD)" >> $GITHUB_ENV
+        make pack
 
-    - name: Get Commit
-      run: |
-        text="${{ github.event.head_commit.message }}"
-        echo "commit=$(echo $text | sed 's/\([][\\`.*^$\/+?{}()=!|:-]\)/\\\1/g')" >> $GITHUB_ENV
-        
-    - name: Build WebUI
-      run: |
-        make build-webui
-       
+
     - name: Build Module
       id: build
       run: |
         make pack
-        echo "status=success" >> $GITHUB_ENV
-        
-    - name: Upload Artefact
+
+    - name: Upload arm32
       uses: actions/upload-artifact@main
-      if: success() && !cancelled()
       with:
-        name: module
-        path: akashaProxy-${{ env.buildSha }}.zip
+        name: akashaProxy-arm32.zip
+        path: akashaProxy.zip
+        compression-level: 0
+
+    - name: Build Clash Meta - armAll
+      env:
+        ANDROID_NDK_HOME: ${{ steps.setup-ndk.outputs.ndk-path }}
+      run: |
+        rm -rf akashaProxy.zip
+        cd Clash.Meta
+        CC=${ANDROID_NDK_HOME}/toolchains/llvm/prebuilt/linux-x86_64/bin/aarch64-linux-android33-clang
+        CGO_ENABLED=0 CC=${CC} GOARCH=arm64 GOOS=android go build -tags ${TAGS} -trimpath -ldflags "${LDFLAGS}" -o ../module/bin/clashMeta-android-arm64-v8a
+        cd ../module/bin && tar -vcjf clashMeta-android-arm64-v8a.tar.bz2 clashMeta-android-arm64-v8a && rm -rf clashMeta-android-arm64-v8a
+
+    - name: Pack Module armAll
+      run: |
+        make pack
+        
+    - name: Upload armAll
+      uses: actions/upload-artifact@main
+      with:
+        name: akashaProxy-armAll.zip
+        path: akashaProxy.zip
+        compression-level: 0
 
     - name: Find ZIP
       run: |
-        echo "ZIP_FILE=$(find . -name 'akashaProxy-${{ env.buildSha }}.zip')" >> $GITHUB_ENV
+        echo "ZIP_FILE=$(find . -name 'akashaProxy.zip')" >> $GITHUB_ENV
 
     - name: Post to Telegram Channel
       if: github.event_name != 'pull_request' && github.ref == 'refs/heads/master'
@@ -101,11 +131,10 @@ jobs:
         COMMIT_MESSAGE: |+
           **New push to github\!**
           
-          `
-          ${{ env.commit }}
-          `
+          `${{ env.commit }}`
           
           by ${{ github.event.head_commit.author.name }}
+          For more architecture see [action](${{ env.GITHUB_SERVER_URL }}/${{ env.GITHUB_REPOSITORY }}/actions/runs/${{ env.GITHUB_RUN_ID }})
           See commit detail [here](${{ github.event.head_commit.url }})
       run: |
         ESCAPED=$(python3 -c 'import json,os,urllib.parse; print(urllib.parse.quote(json.dumps(os.environ["COMMIT_MESSAGE"])))')
