@@ -72,7 +72,7 @@ jobs:
         path: akashaProxy-arm64-${{ env.buildSha }}.zip
         compression-level: 0
 
-    - name: Build Clash Meta - Armv7a
+    - name: Build Clash Meta - Arm32
       env:
         ANDROID_NDK_HOME: ${{ steps.setup-ndk.outputs.ndk-path }}
       run: |
@@ -98,11 +98,16 @@ jobs:
       env:
         ANDROID_NDK_HOME: ${{ steps.setup-ndk.outputs.ndk-path }}
       run: |
-        rm -rf akashaProxy.zip
         cd Clash.Meta
         CC=${ANDROID_NDK_HOME}/toolchains/llvm/prebuilt/linux-x86_64/bin/aarch64-linux-android33-clang
         CGO_ENABLED=0 CC=${CC} GOARCH=arm64 GOOS=android go build -tags ${TAGS} -trimpath -ldflags "${LDFLAGS}" -o ../module/bin/clashMeta-android-arm64-v8a
         cd ../module/bin && tar -vcjf clashMeta-android-arm64-v8a.tar.bz2 clashMeta-android-arm64-v8a && rm -rf clashMeta-android-arm64-v8a
+
+    - name: Build Clash Meta - x86_64
+      env:
+        ANDROID_NDK_HOME: ${{ steps.setup-ndk.outputs.ndk-path }}
+      run: |
+        cd Clash.Meta
         CC=${ANDROID_NDK_HOME}/toolchains/llvm/prebuilt/linux-x86_64/bin/x86_64-linux-android33-clang
         CGO_ENABLED=0 CC=${CC} GOARCH=amd64 GOOS=linux go build -tags ${TAGS} -trimpath -ldflags "${LDFLAGS}" -o ../module/bin/clashMeta-android-x86_64
         cd ../module/bin && tar -vcjf clashMeta-android-x86_64.tar.bz2 clashMeta-android-x86_64 && rm -rf clashMeta-android-x86_64
