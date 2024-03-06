@@ -72,8 +72,8 @@ rule-providers:
 
 # 分流规则
 rules:
-  - AND,(AND,(DST-PORT,443),(NETWORK,UDP)),(NOT,((GEOSITE,cn))),REJECT # 禁用quic(不包括国内)
-  - RULE-SET,AWAvenue,REJECT
+  - AND,(AND,(DST-PORT,443),(NETWORK,UDP)),(NOT,((GEOSITE,cn))),REJECT-DROP # 禁用quic(不包括国内)
+  - RULE-SET,AWAvenue,REJECT-DROP
   - GEOSITE,cn,DIRECT
   - GEOIP,CN,DIRECT
   - MATCH,proxy
