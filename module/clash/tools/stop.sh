@@ -1,3 +1,3 @@
 #!/system/bin/sh
 
-/data/clash/script/clash.service -k && /data/clash/script/clash.iptables -k
+/data/clash/scripts/clash.service -k && /data/clash/scripts/clash.iptables -k

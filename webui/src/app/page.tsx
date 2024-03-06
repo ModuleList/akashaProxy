@@ -8,7 +8,10 @@ import Chip from '@mui/material/Chip';
 import InfoLine from '@/component/InfoLine';
 import Stack from '@mui/material/Stack';
 import Fab from '@mui/material/Fab';
+import IconButton from '@mui/material/IconButton';
 import RotateRight from '@mui/icons-material/RotateRight';
+import PlayArrowRounded from '@mui/icons-material/PlayArrowRounded';
+import Stop from '@mui/icons-material/Stop';
 import Divider from '@mui/material/Divider';
 import { exec, toast } from 'kernelsu';
 import { useEffect, useState } from 'react';
@@ -24,9 +27,19 @@ interface ClashInfo {
 function ClashCard({ info, update }: { info: ClashInfo, update: () => void }) {
   return (
     <>
-      <Typography variant="h6" style={{ marginBottom: '12px' }}>
-        Clash
-      </Typography>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
+        <Typography variant="h6">
+          Clash
+        </Typography>
+        <div>
+          <IconButton color="success" size='small' onClick={() => startClash(update)}>
+            <PlayArrowRounded />
+          </IconButton>
+          <IconButton color="error" size='small' onClick={() => stopClash(update)}>
+            <Stop />
+          </IconButton>
+        </div>
+      </div>
       <Stack spacing={1}>
         <InfoLine title="Version">
           {(info.version != null && <Chip label={info.version} color="primary" variant="outlined" size='small' />)}
@@ -40,8 +53,7 @@ function ClashCard({ info, update }: { info: ClashInfo, update: () => void }) {
 
         <InfoLine title="Operation">
           <div>
-            <Chip label={"Start"} color="primary" size='small' onClick={() => startClash(update)} style={{ marginRight: '1ex' }} />
-            <Chip label={"Stop"} color="primary" size='small' onClick={() => stopClash(update)} />
+            <Chip label={"Delete Cache"} color="primary" size='small' onClick={() => deleteCache()} />
           </div>
         </InfoLine>
 
@@ -76,9 +88,9 @@ function ClashCard({ info, update }: { info: ClashInfo, update: () => void }) {
 
 async function startClash(update: () => void) {
   try {
-    let process = await exec(CLASH_PATH + '/scripts/clash.service -s && ' + CLASH_PATH + '/scripts/clash.iptables -s');
+    let process = await exec(CLASH_PATH + '/tools/start.sh');
     if (process.errno != 0) {
-      throw 'Failed to start clash: Exit code ' + process.errno;
+      throw 'Failed: Exit code ' + process.errno + '\noutput: ' + process.stdout + '\nstderr: ' + process.stderr;
     }
     toast('Clash started');
     update();
@@ -90,12 +102,25 @@ async function startClash(update: () => void) {
 
 async function stopClash(update: () => void) {
   try {
-    let process = await exec(CLASH_PATH + '/scripts/clash.service -k && ' + CLASH_PATH + '/scripts/clash.iptables -k');
+    let process = await exec(CLASH_PATH + '/tools/stop.sh');
     if (process.errno != 0) {
-      throw 'Failed to start clash: Exit code ' + process.errno;
+      throw 'Failed: Exit code ' + process.errno + '\noutput: ' + process.stdout + '\nstderr: ' + process.stderr;
     }
     toast('Clash stopped');
     update();
+  } catch (err) {
+    console.error(err);
+    toast("" + err);
+  }
+}
+
+async function deleteCache() {
+  try {
+    let process = await exec(CLASH_PATH + '/tools/DeleteCache.sh');
+    if (process.errno != 0) {
+      throw 'Failed: Exit code ' + process.errno + '\noutput: ' + process.stdout + '\nstderr: ' + process.stderr;
+    }
+    toast('Cache deleted');
   } catch (err) {
     console.error(err);
     toast("" + err);
