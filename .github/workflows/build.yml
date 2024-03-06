@@ -23,6 +23,7 @@ jobs:
         VERSION=$(cd Clash.Meta && git rev-parse --short HEAD)
         BUILDTIME=$(date -u)
         echo "TAGS=with_gvisor" >> $GITHUB_ENV
+        echo "buildSha=$(git rev-parse --short HEAD)" >> $GITHUB_ENV
         echo "LDFLAGS=-X 'github.com/metacubex/mihomo/constant.Version=${VERSION}' -X 'github.com/metacubex/mihomo/constant.BuildTime=${BUILDTIME}' -w -s -buildid=" >> $GITHUB_ENV
         [ ! -f module/bin ] && mkdir module/bin
         text="${{ github.event.head_commit.message }}"
@@ -66,7 +67,7 @@ jobs:
     - name: Upload arm64
       uses: actions/upload-artifact@main
       with:
-        name: akashaProxy-arm64.zip
+        name: akashaProxy-arm64-${{ env.buildSha }}.zip
         path: akashaProxy.zip
         compression-level: 0
 
@@ -84,7 +85,6 @@ jobs:
       run: |
         make pack
 
-
     - name: Build Module
       id: build
       run: |
@@ -93,7 +93,7 @@ jobs:
     - name: Upload arm32
       uses: actions/upload-artifact@main
       with:
-        name: akashaProxy-arm32.zip
+        name: akashaProxy-arm32-${{ env.buildSha }}.zip
         path: akashaProxy.zip
         compression-level: 0
 
@@ -110,18 +110,18 @@ jobs:
     - name: Pack Module armAll
       run: |
         make pack
-        mv akashaProxy.zip akashaProxy-armAll.zip
+        mv akashaProxy.zip akashaProxy-armAll-${{ env.buildSha }}.zip
         
     - name: Upload armAll
       uses: actions/upload-artifact@main
       with:
-        name: akashaProxy-armAll.zip
-        path: akashaProxy-armAll.zip
+        name: akashaProxy-armAll-${{ env.buildSha }}.zip
+        path: akashaProxy-armAll-${{ env.buildSha }}.zip
         compression-level: 0
 
     - name: Find ZIP
       run: |
-        echo "ZIP_FILE=$(find . -name 'akashaProxy-armAll.zip')" >> $GITHUB_ENV
+        echo "ZIP_FILE=$(find . -name 'akashaProxy-armAll-${{ env.buildSha }}.zip')" >> $GITHUB_ENV
 
     - name: Post to Telegram Channel
       if: github.event_name != 'pull_request' && github.ref == 'refs/heads/master'
