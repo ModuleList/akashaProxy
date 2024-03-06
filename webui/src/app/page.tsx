@@ -74,16 +74,6 @@ function ClashCard({ info, update }: { info: ClashInfo, update: () => void }) {
   )
 }
 
-function AdGuardHomeCard() {
-  return (
-    <>
-      <Typography variant="h6" style={{ marginBottom: '12px' }}>
-        AdGuardHome
-      </Typography>
-    </>
-  )
-}
-
 async function startClash(update: () => void) {
   try {
     let process = await exec(CLASH_PATH + '/scripts/clash.service -s && ' + CLASH_PATH + '/scripts/clash.iptables -s');
@@ -113,40 +103,59 @@ async function stopClash(update: () => void) {
 }
 
 async function updateInfo(setClashInfo: (callback: (info: ClashInfo) => ClashInfo) => void) {
-  // Get clash version
+  let running = false;
+  // Get clash file name
+  let clashFileName = null;
   try {
-    let versionProcess = await exec(CLASH_PATH + '/clashkernel/clashMeta -v');
-    if (versionProcess.errno != 0) {
-      throw 'Failed to execute `' + CLASH_PATH + '/clashkernel/clashMeta -v`: Exit code ' + versionProcess.errno;
+    let cmd = `source ${CLASH_PATH}/clash.config && printf "%s" $Clash_bin_name`;
+    let process = await exec(cmd);
+    if (process.errno != 0) {
+      throw 'Failed to execute `' + cmd + '`: Exit code ' + process.errno;
     }
-    let version = versionProcess.stdout.trim();
-    let versionMatch = version.match(/\bv[0-9.]+\b/);
-    if (versionMatch == null) {
-      throw 'Failed to parse version from `' + version + '`';
-    }
-    version = versionMatch[0];
-    setClashInfo(info => ({ ...info, version }));
+    clashFileName = process.stdout;
   } catch (err) {
     console.error(err);
     setClashInfo(info => ({ ...info, version: null }));
   }
-  let running = false;
-  try {
-    let pidProcess = await exec('cat ' + CLASH_PATH + '/run/clash.pid');
-    if (pidProcess.errno != 0) {
-      throw 'Failed to execute `cat ' + CLASH_PATH + '/run/clash.pid`: Exit code ' + pidProcess.errno;
+  // Get clash version
+  if (clashFileName) {
+    try {
+      let cmd = `"${CLASH_PATH}/clashkernel/${clashFileName}" -v`;
+      let process = await exec(cmd);
+      if (process.errno != 0) {
+        throw 'Failed to execute `' + cmd + '`: Exit code ' + process.errno;
+      }
+      let version = process.stdout;
+      let versionMatch = version.match(/\bv[0-9.]+\b/);
+      if (versionMatch == null) {
+        throw 'Failed to parse version from `' + version + '`';
+      }
+      version = versionMatch[0];
+      setClashInfo(info => ({ ...info, version }));
+    } catch (err) {
+      console.error(err);
+      setClashInfo(info => ({ ...info, version: null }));
     }
-    let pid = pidProcess.stdout.trim();
-    let killProcess = await exec('kill -0 ' + pid);
-    if (killProcess.errno == 0) {
-      running = true;
-      setClashInfo(info => ({ ...info, daemon: parseInt(pid) }));
-    } else {
+    // get daemon pid
+    try {
+      let cmd = `cat ${CLASH_PATH}/run/clash.pid`;
+      let process = await exec(cmd);
+      if (process.errno != 0) {
+        throw 'Failed to execute `' + cmd + '`: Exit code ' + process.errno;
+      }
+      let pid = process.stdout.trim();
+      // check if pid is running
+      let getExeProcess = await exec(`test $(realpath /proc/${pid}/exe) == $(realpath "${CLASH_PATH}/clashkernel/${clashFileName}") || exit 1`);
+      if (getExeProcess.errno == 0) {
+        running = true;
+        setClashInfo(info => ({ ...info, daemon: parseInt(pid) }));
+      } else {
+        setClashInfo(info => ({ ...info, daemon: null, webui: null }));
+      }
+    } catch (err) {
+      console.error(err);
       setClashInfo(info => ({ ...info, daemon: null, webui: null }));
     }
-  } catch (err) {
-    console.error(err);
-    setClashInfo(info => ({ ...info, daemon: null, webui: null }));
   }
 
   if (running) {
@@ -196,12 +205,9 @@ export default function Home() {
     <>
       <Container maxWidth="md" style={{ paddingLeft: '0px', paddingRight: '0px' }}>
         <Grid container spacing={2}>
-          <Grid xs={12} md={6}>
+          <Grid xs={12} md={12}>
             <Card style={{ padding: '16px', backgroundColor: '#fafafc' }}><ClashCard info={clashInfo} update={() => updateInfo(setClashInfo)} /></Card>
           </Grid>
-          {/* <Grid xs={12} md={6}>
-            <Card style={{ padding: '16px', backgroundColor: '#fafafc' }}><AdGuardHomeCard /></Card>
-          </Grid> */}
         </Grid>
       </Container>
 
