@@ -28,24 +28,33 @@ Admin panel: 127.0.0.1:9090/ui (default)
 
 
 ```
-├── adguard
-│   ├── AdGuardHome // AdGuardHome bin
-├── clash.config
-├── clash.yaml
-├── clashkernel
-│   ├── clashMeta //clash kernel
-├── config.yaml
-├── packages.list
-├── mosdns
-│   ├── mosdns // mosdns bin
-├── scripts // clash start script
+├── adguard // AdGuardHome bin dir
+│   ├── AdGuardHome
+├── clashkernel // Kernel bin dir
+│   ├── clashMeta 
+├── scripts // Module startup script
 │   ├── clash.inotify
 │   ├── clash.iptables
 │   ├── clash.service
-│   └── clash.tool 
+│   └── clash.tool
+├── tools
+│   ├── DeleteCache.sh // Clear cache of Google apps and other apps
+│   ├── DownloadAdGuardHome.sh // Download and install the AdGuardHome plugin
+│   ├── reload.sh // reload config file
+│   ├── start.sh // Start module
+│   └── stop.sh // Stop module
 ├── yacd
-│   ├── //yacd-Meta page
-└── DeleteCache.sh
+│   ├── // yacd-Meta Panel source
+├── run
+│   ├── // Module running dir
+├── bin
+│   ├── // Module internal tool dir
+├── GeoSite.dat
+├── GeoIP.dat
+├── clash.config
+├── clash.yaml
+├── config.yaml
+└── packages.list
 ```
 
 clashMeta Tutorial:

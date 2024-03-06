@@ -29,26 +29,34 @@ akashaProxy 是 ~~mihomo~~clashMeta 衍生的Magisk/KernelSU模块
 
 yacd管理面板：127.0.0.1:9090/ui（默认）
 
-
 ```
-├── adguard
-│   ├── AdGuardHome // AdGuardHome bin
-├── clash.config
-├── clash.yaml
-├── clashkernel
-│   ├── clashMeta //clash核心
-├── config.yaml
-├── packages.list
-├── mosdns
-│   ├── mosdns // mosdns bin
-├── scripts // clash启动脚本
+├── adguard // AdGuardHome插件核心目录
+│   ├── AdGuardHome
+├── clashkernel //模块核心目录
+│   ├── clashMeta 
+├── scripts // 模块启动脚本
 │   ├── clash.inotify
 │   ├── clash.iptables
 │   ├── clash.service
-│   └── clash.tool 
+│   └── clash.tool
+├── tools
+│   ├── DeleteCache.sh // 清除Google系app等缓存
+│   ├── DownloadAdGuardHome.sh // 下载安装AdGuardHome插件
+│   ├── reload.sh // 重载配置
+│   ├── start.sh // 启动模块
+│   └── stop.sh // 停止模块
 ├── yacd
 │   ├── // yacd-Meta面板源码
-└── DeleteCache.sh // 清除缓存
+├── run
+│   ├── // 模块运行目录
+├── bin
+│   ├── // 模块内部工具目录
+├── GeoSite.dat
+├── GeoIP.dat
+├── clash.config
+├── clash.yaml
+├── config.yaml
+└── packages.list
 ```
 
 clash教程：
