@@ -287,6 +287,20 @@ update_pre() {
 
 }
 
+reload() {
+    if [ "${Split}" == "true" ];then
+        cp -f ${template_file} ${temporary_config_file}.swp && echo "\n" >> ${temporary_config_file}.swp
+        sed -n -E '/^proxies:.*$/,$p' ${Clash_config_file} >> ${temporary_config_file}.swp
+        echo "\n" >> ${temporary_config_file}.swp
+        sed -i '/^[  ]*$/d' ${temporary_config_file}.swp
+        mv -f ${temporary_config_file}.swp ${temporary_config_file}
+    else
+        cp -f ${Clash_config_file} ${temporary_config_file}
+    fi
+
+    curl -X PUT -d '{"configs": ["${temporary_config_file}"]}' http://127.0.0.1:${Clash_ui_port}/configs?force=true
+}
+
 limit_clash() {
     if [ "${Cgroup_memory_limit}" == "" ]; then
         return
@@ -316,9 +330,7 @@ while getopts ":kfmpusl" signal; do
         update_pre
         ;;
     s)
-        if [ ${auto_updateSubcript} == "true" ]; then
-            curl -X PUT -d '{"configs": ["${temporary_config_file}"]}' http://127.0.0.1:${Clash_ui_port}/configs?force=true
-        fi
+        reload
         ;;
     k)
         if [ "${mode}" = "blacklist" ] || [ "${mode}" = "whitelist" ] || [ "${mode}" = "global" ]; then
