@@ -40,7 +40,6 @@ system_gid="1000"
 system_uid="1000"
 clash_data_dir="/data/clash"
 modules_dir="/data/adb/modules"
-config="false" #更新是否替换clash.config
 ABI=$(getprop ro.product.cpu.abi)
 mkdir -p ${clash_data_dir}/run
 mkdir -p ${clash_data_dir}/clashkernel
@@ -80,7 +79,9 @@ if [ -f "${clash_data_dir}/packages.list" ];then
 fi
 
 if [ -f "${clash_data_dir}/clash.config" ];then
-    if [ "${config}" == "false" ];then
+    oldVersion=$(grep -i "version" ${clash_data_dir}/clash.config | awk -F '=' '{print $2}' | sed "s/\"//g")
+    newVersion=$(grep -i "version" ${MODPATH}/clash/clash.config | awk -F '=' '{print $2}' | sed "s/\"//g")
+    if [ "${oldVersion}" < "${newVersion}" ] && [ ! "${oldVersion}" == "" ];then
         ui_print "- clash.config 文件已存在 跳过覆盖."
         rm -rf ${MODPATH}/clash/clash.config
     fi
