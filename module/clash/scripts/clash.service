@@ -62,10 +62,10 @@ edit_tun() {
                 uid="\n  include-package:${uidlist}"
             fi
             if [ "${ip6list}" != "" ]; then
-                ip6="\n  inet6-route-address:${ip4list}"
+                ip6="\n  inet6-route-address:${ip6list}"
             fi
             if [ "${ip4list}" != "" ]; then
-                ip4="\n  inet4-route-address:${ip6list}"
+                ip4="\n  inet4-route-address:${ip4list}"
             fi
         fi
         addition="${addition}${uid}${ip4}${ip6}"

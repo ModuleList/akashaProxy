@@ -92,12 +92,20 @@ create_mangle_output_filter() {
     fi
     if [ "${mode}" = "blacklist" ] ; then
         for appuid in  ${apps} ; do
+            if [ "$(grep "[0-9].*\." <<< ${appuid})" ];then
+                ${iptables_wait} -t mangle -A FILTER_OUT_CLASH -s ${appuid} -j ACCEPT
+                continue
+            fi
             ${iptables_wait} -t mangle -A FILTER_OUT_CLASH -m owner --uid-owner ${appuid} -j ACCEPT
         done
 
         ${iptables_wait} -t mangle -A FILTER_OUT_CLASH -m owner ! --gid-owner ${Clash_group} -j CLASH_OUT
     elif [ "${mode}" = "whitelist" ] ; then
         for appuid in  ${apps} ; do
+            if [ "$(grep "[0-9].*\." <<< ${appuid})" ];then
+                ${iptables_wait} -t mangle -A FILTER_OUT_CLASH -s ${appuid} -j CLASH_OUT
+                continue
+            fi
             ${iptables_wait} -t mangle -A FILTER_OUT_CLASH -m owner --uid-owner ${appuid} -j CLASH_OUT
          done
     fi
@@ -109,12 +117,20 @@ create_mangle_output_filter() {
 
         if [ "${mode}" = "blacklist" ] ; then
             for appuid in  ${apps} ; do
+                if [ "$(grep ":" <<< ${package})" ];then
+                    ${ip6tables_wait} -t mangle -A FILTER_OUT_CLASH -s ${appuid} -j ACCEPT
+                    continue
+                fi
                 ${ip6tables_wait} -t mangle -A FILTER_OUT_CLASH -m owner --uid-owner ${appuid} -j ACCEPT
             done
 
-           ${ip6tables_wait} -t mangle -A FILTER_OUT_CLASH -m owner ! --gid-owner ${Clash_group} -j CLASH_OUT
+            ${ip6tables_wait} -t mangle -A FILTER_OUT_CLASH -m owner ! --gid-owner ${Clash_group} -j CLASH_OUT
         elif [ "${mode}" = "whitelist" ] ; then
             for appuid in  ${apps} ; do
+                if [ "$(grep ":" <<< ${package})" ];then
+                    ${ip6tables_wait} -t mangle -A FILTER_OUT_CLASH -s ${appuid} -j CLASH_OUT
+                    continue
+                fi
                 ${ip6tables_wait} -t mangle -A FILTER_OUT_CLASH -m owner --uid-owner ${appuid} -j CLASH_OUT
             done
         fi
@@ -380,11 +396,12 @@ set_tun(){
     fi
     if [ "${mode}" = "blacklist" ] ; then
         for appuid in ${apps} ; do
+            
             ${iptables_wait} -t mangle -A CLASH_OUT -m owner --uid-owner ${appuid} -j RETURN
         done
         ${iptables_wait} -t mangle -A CLASH_OUT -j MARK --set-xmark ${mark_id}
     elif [ "${mode}" = "whitelist" ] ; then
-        for appuid in  ${apps} ; do
+        for appuid in ${apps} ; do
             ${iptables_wait} -t mangle -A CLASH_OUT -m owner --uid-owner ${appuid} -j MARK --set-xmark ${mark_id}
          done
     fi
