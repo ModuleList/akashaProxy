@@ -22,6 +22,59 @@ update_file() {
         return 1
     fi
 }
+edit_tun() {
+    addition="auto-route: true"
+    uidlist=""
+    ip4list=""
+    ip6list=""
+    if [ "${mode}" != "global" ]; then
+        apps=`cat ${filter_packages_file} | sort -u`
+
+        for appuid in ${apps} ; do
+            if [ "$(grep ":" <<< ${appuid})" ];then
+                ip6list="${ip6list}\n    - ${appuid}"
+                continue
+            fi
+            if [ "$(grep "[0-9].*\." <<< ${appuid})" ];then
+                ip4list="${ip4list}\n    - ${appuid}"
+                continue
+            fi
+            uidlist="${uidlist}\n    - ${appuid}"
+            if [ "${mode}" == "blacklist" ]; then
+                log "info: ${appuid}已代理."
+            else
+                log "info: ${appuid}已排除."
+            fi
+        done
+        
+        if [ "${mode}" == "blacklist" ]; then
+            if [ "${uidlist}" != "" ]; then
+                uid="\n  exclude-package:${uidlist}"
+            fi
+            if [ "${ip4list}" != "" ]; then
+                ip6="\n  inet6-route-exclude-address:${ip4list}"
+            fi
+            if [ "${ip6list}" != "" ]; then
+                ip4="\n  inet4-route-exclude-address:${ip6list}"
+            fi
+        elif [ "${mode}" == "whitelist" ] ; then
+            if [ "${uidlist}" != "" ]; then
+                uid="\n  include-package:${uidlist}"
+            fi
+            if [ "${ip6list}" != "" ]; then
+                ip6="\n  inet6-route-address:${ip4list}"
+            fi
+            if [ "${ip4list}" != "" ]; then
+                ip4="\n  inet4-route-address:${ip6list}"
+            fi
+        fi
+        addition="${addition}${uid}${ip4}${ip6}"
+    fi
+    if [ "$Clash_tun_status" == "true" ] || [ "${Clash_auto_route}" != "true" ];then
+        sed -i "${Clash_tun_line}a\  ${addition}" ${temporary_config_file}
+        log "info: 已自动覆写clash配置"
+    fi
+}
 
 start_clash() {
     mkdir -p ${Clash_run_path}
@@ -37,6 +90,15 @@ start_clash() {
         fi
     fi
     
+    if [ "${Split}" == "true" ];then
+        cp -f ${template_file} ${temporary_config_file}.swp && echo "\n" >> ${temporary_config_file}.swp
+        sed -n -E '/^proxies:.*$/,$p' ${Clash_config_file} >> ${temporary_config_file}.swp
+        echo "\n" >> ${temporary_config_file}.swp
+        sed -i '/^[  ]*$/d' ${temporary_config_file}.swp
+        mv -f ${temporary_config_file}.swp ${temporary_config_file}
+    else
+        cp -f ${Clash_config_file} ${temporary_config_file}
+    fi
     
     if [ "${ipv6}" = "false" ] ; then
         for net in /proc/sys/net/ipv6/conf/{wlan*,*data*} ; do
@@ -71,6 +133,9 @@ start_clash() {
         fi
     fi
     
+    if [ "$Clash_tun_status" == "true" ] || [ "${auto_config}" != "true" ];then
+        edit_tun
+    fi
     
     if [ "${Clash_tproxy_port}" == 0 ] || [ "${Clash_tproxy_port}" == ""  ]; then
         if [ "${Clash_tun_status}" != "true" ]; then
@@ -78,7 +143,6 @@ start_clash() {
             exit 1
         fi
     fi
-    
     if [ -f "${Clash_bin_path}" ] ; then
         mkdir -p ${Clash_run_path}
         chown ${Clash_user_group} ${Clash_bin_path}
@@ -90,7 +154,7 @@ start_clash() {
         rm -rf ${Clash_run_path}/root
         touch ${Clash_run_path}/root
         chmod 777 ${Clash_run_path}/root
-        if [ "${Geo_auto_update}" != "true"];then
+        if [ "${Geo_auto_update}" != "true" ];then
             if [ "${auto_updateGeoSite}" == "true" ]; then
                 echo "${update_geoXInterval} ${scripts_dir}/clash.tool -u" >> ${Clash_run_path}/root \
                 && log "info: 自动更新GeoX定时已开启."
@@ -161,15 +225,6 @@ start_clash() {
     if [ ${ml} == "true" ];then    
         log "info: 当前百度系免流ip:${baidumlip}"
         log "info: 当前腾讯系免流ip:${txmlip}"
-    fi
-    if [ "${Split}" == "true" ];then
-        cp -f ${template_file} ${temporary_config_file}.swp && echo "\n" >> ${temporary_config_file}.swp
-        sed -n -E '/^proxies:.*$/,$p' ${Clash_config_file} >> ${temporary_config_file}.swp
-        echo "\n" >> ${temporary_config_file}.swp
-        sed -i '/^[  ]*$/d' ${temporary_config_file}.swp
-        mv -f ${temporary_config_file}.swp ${temporary_config_file}
-    else
-        cp -f ${Clash_config_file} ${temporary_config_file}
     fi
     if [ ${ml} == "true" ];then
         sed -i "s/百度系免流ip/${baidumlip}/g" ${temporary_config_file}

@@ -196,6 +196,7 @@ update_file() {
 }
 
 find_packages_uid() {
+    rm -f ${appuid_file}
     rm -f ${appuid_file}.tmp
     hd=""
     if [ "${mode}" == "global" ]; then
@@ -218,6 +219,24 @@ find_packages_uid() {
             log "warn: Tproxy模式下fake-ip不可使用黑白名单."
             exit 1
         fi
+        if [ "$(grep ":" <<< ${package})" ];then
+            echo "${package}" >> ${appuid_file}
+            if [ "${mode}" = "blacklist" ]; then
+                log "info: ${package}已过滤."
+            elif [ "${mode}" = "whitelist" ]; then
+                log "info: ${package}已代理."
+            fi
+            continue
+        fi
+        if [ "$(grep "[0-9].*\." <<< ${package})" ];then
+            echo "${package}" >> ${appuid_file}
+            if [ "${mode}" = "blacklist" ]; then
+                log "info: ${package}已过滤."
+            elif [ "${mode}" = "whitelist" ]; then
+                log "info: ${package}已代理."
+            fi
+            continue
+        fi
         nhd=$(awk -F ">" '/^[0-9]+>$/{print $1}' <<< "${package}")
         if [ "${nhd}" != "" ]; then
             hd=${nhd}
@@ -235,7 +254,6 @@ find_packages_uid() {
             log "info: ${hd}${package}已代理."
         fi
     done
-    rm -f ${appuid_file}
     for uid in $(cat ${appuid_file}.tmp | sort -u); do
         echo ${uid} >> ${appuid_file}
     done
