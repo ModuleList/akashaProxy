@@ -41,9 +41,9 @@ edit_tun() {
             fi
             uidlist="${uidlist}\n    - ${appuid}"
             if [ "${mode}" == "blacklist" ]; then
-                log "info: ${appuid}已代理."
-            else
                 log "info: ${appuid}已排除."
+            else
+                log "info: ${appuid}已代理."
             fi
         done
         
@@ -118,6 +118,10 @@ start_clash() {
         done
         log "info: 已开启代理ipv6"
     fi
+    
+    if [ "${udp}" = "true" ] ; then
+        log "info: 已开启代理udp"
+    fi
 
     pid=`cat ${Clash_pid_file} 2> /dev/null`
     if (cat /proc/${pid}/cmdline | grep -q clash) ; then
@@ -160,7 +164,7 @@ start_clash() {
                 && log "info: 自动更新GeoX定时已开启."
             fi
         else
-            log "info: 核心已开启自动更新 模块不进行操作."
+            log "info: 核心已开启自动更新GeoX 模块不进行操作."
         fi
         if [ "${auto_updateSubcript}" == "true" ]; then
             echo "${update_subcriptInterval} ${scripts_dir}/clash.tool -s" >> ${Clash_run_path}/root \
