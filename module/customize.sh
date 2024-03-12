@@ -87,7 +87,7 @@ if [ -f "${clash_data_dir}/clash.config" ];then
     fi
 fi
 
-mv -f ${MODPATH}/clash/* ${clash_data_dir}/
+cp -Rf ${MODPATH}/clash/* ${clash_data_dir}/
 rm -rf ${MODPATH}/clash
 rm -rf ${MODPATH}/bin
 rm -rf ${MODPATH}/clashkernel
