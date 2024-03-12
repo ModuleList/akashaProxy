@@ -22,11 +22,18 @@ update_file() {
         return 1
     fi
 }
+
 edit_tun() {
-    addition="auto-route: true"
     uidlist=""
     ip4list=""
     ip6list=""
+    
+    if [ "${Clash_auto_route}" != "true" ];then
+        addition="auto-route: true"
+    else
+        addition=""
+    fi
+    
     if [ "${mode}" != "global" ]; then
         apps=`cat ${filter_packages_file} | sort -u`
 
@@ -70,12 +77,11 @@ edit_tun() {
         fi
         addition="${addition}${uid}${ip4}${ip6}"
     fi
-    if [ "$Clash_tun_status" == "true" ] || [ "${Clash_auto_route}" != "true" ];then
+    if [ "$Clash_tun_status" == "true" ];then
         sed -i "${Clash_tun_line}a\  ${addition}" ${temporary_config_file}
         log "info: 已自动覆写clash配置"
     fi
 }
-
 start_clash() {
     mkdir -p ${Clash_run_path}
     if [[ $(magisk -v | grep "delta") ]] && [[ $(magisk -v | grep "kitsune") ]];then
