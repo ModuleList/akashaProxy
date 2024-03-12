@@ -109,7 +109,7 @@ set_perm  ${clash_data_dir}/packages.list ${system_uid} ${system_gid} 0770
 ui_print ""
 ui_print "教程见→https://github.com/ModuleList/akashaProxy"
 ui_print "************************************************"
-ui_print "Telegram Channel: @wtdnwbzda"
+ui_print "Telegram Channel: https://t.me/akashaProxy"
 ui_print ""
 ui_print "为了让你能够阅读以上消息，安装进度暂停5秒!"
 sleep 5
