@@ -22,7 +22,6 @@ update_file() {
         return 1
     fi
 }
-
 edit_tun() {
     uidlist=""
     ip4list=""
@@ -82,6 +81,7 @@ edit_tun() {
         log "info: 已自动覆写clash配置"
     fi
 }
+
 start_clash() {
     mkdir -p ${Clash_run_path}
     if [[ $(magisk -v | grep "delta") ]] && [[ $(magisk -v | grep "kitsune") ]];then
@@ -100,7 +100,6 @@ start_clash() {
         cp -f ${template_file} ${temporary_config_file}.swp && echo "\n" >> ${temporary_config_file}.swp
         sed -n -E '/^proxies:.*$/,$p' ${Clash_config_file} >> ${temporary_config_file}.swp
         echo "\n" >> ${temporary_config_file}.swp
-        sed -i '/^[  ]*$/d' ${temporary_config_file}.swp
         mv -f ${temporary_config_file}.swp ${temporary_config_file}
     else
         cp -f ${Clash_config_file} ${temporary_config_file}
@@ -143,9 +142,6 @@ start_clash() {
         fi
     fi
     
-    if [ "$Clash_tun_status" == "true" ] || [ "${auto_config}" != "true" ];then
-        edit_tun
-    fi
     
     if [ "${Clash_tproxy_port}" == 0 ] || [ "${Clash_tproxy_port}" == ""  ]; then
         if [ "${Clash_tun_status}" != "true" ]; then
@@ -236,6 +232,11 @@ start_clash() {
         log "info: 当前百度系免流ip:${baidumlip}"
         log "info: 当前腾讯系免流ip:${txmlip}"
     fi
+    
+    if [ "$Clash_tun_status" == "true" ] || [ "${auto_config}" == "true" ];then
+        edit_tun
+    fi
+    
     if [ ${ml} == "true" ];then
         sed -i "s/百度系免流ip/${baidumlip}/g" ${temporary_config_file}
         sed -i "s/腾讯系免流ip/${txmlip}/g" ${temporary_config_file}
