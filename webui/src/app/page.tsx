@@ -1,22 +1,41 @@
 'use client'
 
 import Container from '@mui/material/Container';
-import Grid from '@mui/material/Unstable_Grid2';
-import Card from '@mui/material/Card';
-import Typography from '@mui/material/Typography';
 import Chip from '@mui/material/Chip';
 import InfoLine from '@/component/InfoLine';
 import Stack from '@mui/material/Stack';
 import Fab from '@mui/material/Fab';
-import IconButton from '@mui/material/IconButton';
+import Button from '@mui/material/Button';
+import { blueGrey, grey, lightBlue } from '@mui/material/colors';
 import RotateRight from '@mui/icons-material/RotateRight';
-import PlayArrowRounded from '@mui/icons-material/PlayArrowRounded';
-import Stop from '@mui/icons-material/Stop';
+import DoneAll from '@mui/icons-material/DoneAll';
+import ClearIcon from '@mui/icons-material/Clear';
+import Settings from '@mui/icons-material/Settings';
+import GpsFixedIcon from '@mui/icons-material/GpsFixed';
+import SpeedIcon from '@mui/icons-material/Speed';
+import { createTheme, ThemeProvider } from '@mui/material/styles';
 import Divider from '@mui/material/Divider';
 import { exec, toast } from 'kernelsu';
 import { useEffect, useState } from 'react';
 import { CLASH_PATH } from './consts';
 import yaml from 'js-yaml';
+import Card from '@mui/material/Card';
+
+const theme = createTheme({
+  palette: {
+    success: {
+      main: lightBlue[900],
+    },
+    warning: {
+      main: blueGrey[500],
+    },
+    info: {
+      main: grey[50],
+      dark: grey[100],
+    },
+  },
+});
+
 
 interface ClashInfo {
   version: string | null,
@@ -25,63 +44,88 @@ interface ClashInfo {
   log: string | null,
 }
 function ClashCard({ info, update }: { info: ClashInfo, update: () => void }) {
+  let bigButtonStyle: React.CSSProperties = {
+    width: "100%",
+    padding: "20px",
+    textTransform: "none",
+    fontSize: "18px",
+    marginTop: "1rem",
+    justifyContent: "start",
+    borderRadius: "10px",
+  };
   return (
     <>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
-        <Typography variant="h6">
-          Clash
-        </Typography>
-        <div>
-          <IconButton color="success" size='small' onClick={() => startClash(update)}>
-            <PlayArrowRounded />
-          </IconButton>
-          <IconButton color="error" size='small' onClick={() => stopClash(update)}>
-            <Stop />
-          </IconButton>
-        </div>
-      </div>
-      <Stack spacing={1}>
-        <InfoLine title="Version">
-          {(info.version != null && <Chip label={info.version} color="primary" variant="outlined" size='small' />)}
-          {(info.version == null && <Chip label="Unknown" color="warning" variant="outlined" size='small' />)}
-        </InfoLine>
+      <ThemeProvider theme={theme}>
+        <Button variant="contained" style={{
+          width: "100%",
+          padding: "24px 20px",
+          textTransform: "none",
+          fontSize: "20px",
+          marginTop: "1rem",
+          justifyContent: "start",
+          borderRadius: "10px",
+        }}
+          startIcon={info.daemon != null ? (<DoneAll />) : (<ClearIcon />)}
+          color={info.daemon != null ? "success" : "warning"}
+          onClick={() => info.daemon != null ? stopClash(update) : startClash(update)}
+        >{info.daemon != null ? "Clash 运行正常" : "Clash 已停止"}</Button>
 
-        <InfoLine title="Daemon">
-          {(info.daemon != null && <Chip label={"Running (" + info.daemon + ")"} color="success" variant="outlined" size='small' />)}
-          {(info.daemon == null && <Chip label="Stopped" color="warning" variant="outlined" size='small' />)}
-        </InfoLine>
+        <Button variant="contained"
+          style={bigButtonStyle}
+          startIcon={<Settings />}
+          color="info"
+          onClick={() => window.location.href = info.webui ?? ""}
+        >网页面板</Button>
 
-        <InfoLine title="Operation">
-          <div>
-            <Chip label={"Delete Cache"} color="primary" size='small' onClick={() => deleteCache()} />
-          </div>
-        </InfoLine>
+        <Button variant="contained"
+          style={bigButtonStyle}
+          startIcon={<GpsFixedIcon />}
+          color="info"
+          onClick={() => window.location.href = "https://ip.skk.moe/"}
+        >IP检查</Button>
 
-        {(info.webui != null &&
-          <InfoLine title="WebUI">
-            <Chip label={"Open"} color="primary" size='small' onClick={() => window.location.href = info.webui ?? ""} />
+        <Button variant="contained"
+          style={bigButtonStyle}
+          startIcon={<SpeedIcon />}
+          color="info"
+          onClick={() => window.location.href = "https://fast.com/"}
+        >网络测速</Button>
+      </ThemeProvider>
+
+      <Card style={{ padding: '16px', backgroundColor: '#fafafc', marginTop: "2rem" }}>
+        <Stack spacing={1}>
+          <InfoLine title="版本">
+            {(info.version != null && <Chip label={info.version} color="primary" variant="outlined" size='small' />)}
+            {(info.version == null && <Chip label="未知" color="warning" variant="outlined" size='small' />)}
           </InfoLine>
-        )}
-        {(info.log != null &&
-          <>
-            <Divider />
+
+          <InfoLine title="操作">
             <div>
-              <p style={{ marginBottom: '1ex' }}>Logs</p>
-              <pre style={{
-                overflowX: "scroll",
-                borderRadius: '5px',
-                padding: '8px',
-                backgroundColor: "#eaeaec",
-                lineHeight: '1.3',
-                fontSize: '12px',
-                fontFamily: "monospace",
-                display: "block",
-                whiteSpace: 'pre',
-              }}>{info.log}</pre>
+              <Chip label={"删除缓存"} color="primary" size='small' onClick={() => deleteCache()} />
             </div>
-          </>
-        )}
-      </Stack>
+          </InfoLine>
+
+          {(info.log != null &&
+            <>
+              <Divider />
+              <div>
+                <p style={{ marginBottom: '1ex' }}>日志</p>
+                <pre style={{
+                  overflowX: "scroll",
+                  borderRadius: '5px',
+                  padding: '8px',
+                  backgroundColor: "#eaeaec",
+                  lineHeight: '1.3',
+                  fontSize: '12px',
+                  fontFamily: "monospace",
+                  display: "block",
+                  whiteSpace: 'pre',
+                }}>{info.log}</pre>
+              </div>
+            </>
+          )}
+        </Stack>
+      </Card>
     </>
   )
 }
@@ -222,18 +266,14 @@ async function updateInfo(setClashInfo: (callback: (info: ClashInfo) => ClashInf
 }
 
 export default function Home() {
-  let [clashInfo, setClashInfo] = useState<ClashInfo>({ version: null, daemon: null, webui: null, log: null });
+  let [clashInfo, setClashInfo] = useState<ClashInfo>({ version: null, daemon: 1, webui: null, log: null });
   useEffect(() => {
     updateInfo(setClashInfo);
   }, [])
   return (
     <>
       <Container maxWidth="md" style={{ paddingLeft: '0px', paddingRight: '0px' }}>
-        <Grid container spacing={2}>
-          <Grid xs={12} md={12}>
-            <Card style={{ padding: '16px', backgroundColor: '#fafafc' }}><ClashCard info={clashInfo} update={() => updateInfo(setClashInfo)} /></Card>
-          </Grid>
-        </Grid>
+        <ClashCard info={clashInfo} update={() => updateInfo(setClashInfo)} />
       </Container>
 
       <Fab size="small" color="success" style={{ right: '1em', bottom: '1em', zIndex: 999, position: 'fixed' }} onClick={() => updateInfo(setClashInfo)}>
