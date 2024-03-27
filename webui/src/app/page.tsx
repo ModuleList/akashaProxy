@@ -222,11 +222,11 @@ async function updateInfo(setClashInfo: (callback: (info: ClashInfo) => ClashInf
         throw 'Failed to execute `' + cmd + '`: Exit code ' + process.errno;
       }
       let version = process.stdout;
-      let versionMatch = version.match(/\bv[0-9.]+\b/);
+      let versionMatch = version.match(/^(Clash|Mihomo Meta) ([^ ]+)/);
       if (versionMatch == null) {
         throw 'Failed to parse version from `' + version + '`';
       }
-      version = versionMatch[0];
+      version = versionMatch[2];
       resultInfo.version = version;
     } catch (err) {
       console.error(err);
