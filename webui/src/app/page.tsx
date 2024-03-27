@@ -15,6 +15,7 @@ import GpsFixedIcon from '@mui/icons-material/GpsFixed';
 import SpeedIcon from '@mui/icons-material/Speed';
 import { createTheme, ThemeProvider } from '@mui/material/styles';
 import Divider from '@mui/material/Divider';
+import LoadingButton from '@mui/lab/LoadingButton';
 import { exec, toast } from 'kernelsu';
 import { useEffect, useState } from 'react';
 import { CLASH_PATH } from './consts';
@@ -42,8 +43,9 @@ interface ClashInfo {
   daemon: number | null,
   webui: string | null,
   log: string | null,
+  loading: boolean,
 }
-function ClashCard({ info, update }: { info: ClashInfo, update: () => void }) {
+function ClashCard({ info, setClashInfo }: { info: ClashInfo, setClashInfo: (callback: (info: ClashInfo) => ClashInfo) => void }) {
   let bigButtonStyle: React.CSSProperties = {
     width: "100%",
     padding: "20px",
@@ -56,7 +58,7 @@ function ClashCard({ info, update }: { info: ClashInfo, update: () => void }) {
   return (
     <>
       <ThemeProvider theme={theme}>
-        <Button variant="contained" style={{
+        <LoadingButton variant="contained" style={{
           width: "100%",
           padding: "24px 20px",
           textTransform: "none",
@@ -65,17 +67,20 @@ function ClashCard({ info, update }: { info: ClashInfo, update: () => void }) {
           justifyContent: "start",
           borderRadius: "10px",
         }}
+          loading={info.loading}
           startIcon={info.daemon != null ? (<DoneAll />) : (<ClearIcon />)}
           color={info.daemon != null ? "success" : "warning"}
-          onClick={() => info.daemon != null ? stopClash(update) : startClash(update)}
-        >{info.daemon != null ? "Clash 运行正常" : "Clash 已停止"}</Button>
+          onClick={() => info.daemon != null ? stopClash(setClashInfo) : startClash(setClashInfo)}
+        >{info.daemon != null ? "Clash 运行正常" : "Clash 已停止"}</LoadingButton>
 
-        <Button variant="contained"
-          style={bigButtonStyle}
-          startIcon={<Settings />}
-          color="info"
-          onClick={() => window.location.href = info.webui ?? ""}
-        >网页面板</Button>
+        {info.daemon != null && (
+          <Button variant="contained"
+            style={bigButtonStyle}
+            startIcon={<Settings />}
+            color="info"
+            onClick={() => window.location.href = info.webui ?? ""}
+          >网页面板</Button>
+        )}
 
         <Button variant="contained"
           style={bigButtonStyle}
@@ -130,32 +135,36 @@ function ClashCard({ info, update }: { info: ClashInfo, update: () => void }) {
   )
 }
 
-async function startClash(update: () => void) {
+async function startClash(setClashInfo: (callback: (info: ClashInfo) => ClashInfo) => void) {
+  setClashInfo(info => ({ ...info, loading: true }));
   try {
     let process = await exec(CLASH_PATH + '/tools/start.sh');
     if (process.errno != 0) {
       throw 'Failed: Exit code ' + process.errno + '\noutput: ' + process.stdout + '\nstderr: ' + process.stderr;
     }
     toast('Clash started');
-    update();
+    await updateInfo(setClashInfo);
   } catch (err) {
     console.error(err);
     toast("" + err);
   }
+  setClashInfo(info => ({ ...info, loading: false }));
 }
 
-async function stopClash(update: () => void) {
+async function stopClash(setClashInfo: (callback: (info: ClashInfo) => ClashInfo) => void) {
+  setClashInfo(info => ({ ...info, loading: true }));
   try {
     let process = await exec(CLASH_PATH + '/tools/stop.sh');
     if (process.errno != 0) {
       throw 'Failed: Exit code ' + process.errno + '\noutput: ' + process.stdout + '\nstderr: ' + process.stderr;
     }
     toast('Clash stopped');
-    update();
+    await updateInfo(setClashInfo);
   } catch (err) {
     console.error(err);
     toast("" + err);
   }
+  setClashInfo(info => ({ ...info, loading: false }));
 }
 
 async function deleteCache() {
@@ -265,15 +274,41 @@ async function updateInfo(setClashInfo: (callback: (info: ClashInfo) => ClashInf
   }
 }
 
+function saveClashInfo(clashInfo: ClashInfo) {
+  if (!clashInfo.loading && typeof window !== "undefined") {
+    window.sessionStorage.setItem('clashInfo', JSON.stringify(clashInfo));
+  }
+}
+
+function loadClashInfo(): ClashInfo {
+  const defaultInfo: ClashInfo = { version: null, daemon: null, webui: null, log: null, loading: true };
+  if (typeof window !== "undefined") {
+    let clashInfo = window.sessionStorage.getItem('clashInfo');
+    if (clashInfo == null) {
+      return defaultInfo;
+    }
+    try {
+      return JSON.parse(clashInfo);
+    } catch (err) {
+      console.error(err);
+      return defaultInfo;
+    }
+  } else {
+    return defaultInfo;
+  }
+}
+
 export default function Home() {
-  let [clashInfo, setClashInfo] = useState<ClashInfo>({ version: null, daemon: 1, webui: null, log: null });
+  let [clashInfo, setClashInfo] = useState<ClashInfo>(loadClashInfo());
+  useEffect(() => saveClashInfo(clashInfo), [clashInfo]);
   useEffect(() => {
     updateInfo(setClashInfo);
-  }, [])
+    setClashInfo(info => ({ ...info, loading: false }));
+}, [])
   return (
     <>
       <Container maxWidth="md" style={{ paddingLeft: '0px', paddingRight: '0px' }}>
-        <ClashCard info={clashInfo} update={() => updateInfo(setClashInfo)} />
+        <ClashCard info={clashInfo} setClashInfo={setClashInfo} />
       </Container>
 
       <Fab size="small" color="success" style={{ right: '1em', bottom: '1em', zIndex: 999, position: 'fixed' }} onClick={() => updateInfo(setClashInfo)}>
