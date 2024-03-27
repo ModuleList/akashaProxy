@@ -241,13 +241,11 @@ async function updateInfo(setClashInfo: (callback: (info: ClashInfo) => ClashInf
       let configYaml = configYamlProcess.stdout;
       let config = yaml.load(configYaml) as {
         'external-controller': string | undefined,
-        'external-ui-name': string | undefined,
         'secret': string | undefined,
       };
       if (config['external-controller'] == undefined) throw 'external-controller not found in config.yaml';
       let port = config['external-controller'].split(':')[1];
-      let path = config['external-ui-name'] ?? 'ui';
-      let url = 'http://127.0.0.1:' + port + '/' + path + '?hostname=127.0.0.1&port=' + port;
+      let url = 'http://127.0.0.1:' + port + '/ui/?hostname=127.0.0.1&port=' + port;
       if (config['secret'] != undefined) url += '&secret=' + config['secret'];
       resultInfo.webui = url;
     } catch (err) {
