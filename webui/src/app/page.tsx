@@ -138,17 +138,17 @@ function ClashCard({ info, setClashInfo }: { info: ClashInfo, setClashInfo: (cal
 async function startClash(setClashInfo: (callback: (info: ClashInfo) => ClashInfo) => void) {
   setClashInfo(info => ({ ...info, loading: true }));
   try {
-    let process = await exec(CLASH_PATH + '/tools/start.sh');
+    // we need change cgroup before start clash, otherwise clash will be killed when kernelsu manager is be killed
+    let process = await exec(`su -c "${CLASH_PATH}/tools/start.sh"`);
     if (process.errno != 0) {
       throw 'Failed: Exit code ' + process.errno + '\noutput: ' + process.stdout + '\nstderr: ' + process.stderr;
     }
-    toast('Clash started');
     await updateInfo(setClashInfo);
   } catch (err) {
+    setClashInfo(info => ({ ...info, loading: false }));
     console.error(err);
     toast("" + err);
   }
-  setClashInfo(info => ({ ...info, loading: false }));
 }
 
 async function stopClash(setClashInfo: (callback: (info: ClashInfo) => ClashInfo) => void) {
@@ -158,13 +158,12 @@ async function stopClash(setClashInfo: (callback: (info: ClashInfo) => ClashInfo
     if (process.errno != 0) {
       throw 'Failed: Exit code ' + process.errno + '\noutput: ' + process.stdout + '\nstderr: ' + process.stderr;
     }
-    toast('Clash stopped');
     await updateInfo(setClashInfo);
   } catch (err) {
+    setClashInfo(info => ({ ...info, loading: false }));
     console.error(err);
     toast("" + err);
   }
-  setClashInfo(info => ({ ...info, loading: false }));
 }
 
 async function deleteCache() {
@@ -181,6 +180,7 @@ async function deleteCache() {
 }
 
 async function updateInfo(setClashInfo: (callback: (info: ClashInfo) => ClashInfo) => void) {
+  let resultInfo: ClashInfo = { version: null, daemon: null, webui: null, log: null, loading: false };
   let running = false;
   // Get clash file name
   let clashFileName = null;
@@ -193,7 +193,6 @@ async function updateInfo(setClashInfo: (callback: (info: ClashInfo) => ClashInf
     clashFileName = process.stdout;
   } catch (err) {
     console.error(err);
-    setClashInfo(info => ({ ...info, version: null }));
   }
   // Get clash version
   if (clashFileName) {
@@ -209,10 +208,9 @@ async function updateInfo(setClashInfo: (callback: (info: ClashInfo) => ClashInf
         throw 'Failed to parse version from `' + version + '`';
       }
       version = versionMatch[0];
-      setClashInfo(info => ({ ...info, version }));
+      resultInfo.version = version;
     } catch (err) {
       console.error(err);
-      setClashInfo(info => ({ ...info, version: null }));
     }
     // get daemon pid
     try {
@@ -226,13 +224,10 @@ async function updateInfo(setClashInfo: (callback: (info: ClashInfo) => ClashInf
       let getExeProcess = await exec(`test $(realpath /proc/${pid}/exe) == $(realpath "${CLASH_PATH}/clashkernel/${clashFileName}") || exit 1`);
       if (getExeProcess.errno == 0) {
         running = true;
-        setClashInfo(info => ({ ...info, daemon: parseInt(pid) }));
-      } else {
-        setClashInfo(info => ({ ...info, daemon: null, webui: null }));
+        resultInfo.daemon = parseInt(pid);
       }
     } catch (err) {
       console.error(err);
-      setClashInfo(info => ({ ...info, daemon: null, webui: null }));
     }
   }
 
@@ -254,11 +249,9 @@ async function updateInfo(setClashInfo: (callback: (info: ClashInfo) => ClashInf
       let path = config['external-ui-name'] ?? 'ui';
       let url = 'http://127.0.0.1:' + port + '/' + path + '?hostname=127.0.0.1&port=' + port;
       if (config['secret'] != undefined) url += '&secret=' + config['secret'];
-      setClashInfo(info => ({ ...info, webui: url }));
-
+      resultInfo.webui = url;
     } catch (err) {
       console.error(err);
-      setClashInfo(info => ({ ...info, webui: null }));
     }
   }
   // get logs
@@ -267,11 +260,11 @@ async function updateInfo(setClashInfo: (callback: (info: ClashInfo) => ClashInf
     if (logProcess.errno != 0) {
       throw 'Failed to execute `tail -n 100 ' + CLASH_PATH + '/run/run.logs`: Exit code ' + logProcess.errno;
     }
-    setClashInfo(info => ({ ...info, log: logProcess.stdout }));
+    resultInfo.log = logProcess.stdout;
   } catch (err) {
     console.error(err);
-    setClashInfo(info => ({ ...info, log: null }));
   }
+  setClashInfo(() => resultInfo);
 }
 
 function saveClashInfo(clashInfo: ClashInfo) {
@@ -303,7 +296,6 @@ export default function Home() {
   useEffect(() => saveClashInfo(clashInfo), [clashInfo]);
   useEffect(() => {
     updateInfo(setClashInfo);
-    setClashInfo(info => ({ ...info, loading: false }));
 }, [])
   return (
     <>
