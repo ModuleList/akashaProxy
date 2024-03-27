@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import "./globals.css";
-import Typography from '@mui/material/Typography';
+import React from 'react';
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -15,11 +15,8 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en">
+    <html>
       <body className={inter.className}>
-        <Typography variant="h5" style={{marginBottom: '1em'}}>
-          akashaProxy
-        </Typography>
         {children}
       </body>
     </html>
