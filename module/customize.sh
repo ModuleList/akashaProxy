@@ -79,11 +79,14 @@ if [ -f "${clash_data_dir}/packages.list" ];then
 fi
 
 if [ -f "${clash_data_dir}/clash.config" ];then
+    mode=$(grep -i "^mode" ${clash_data_dir}/clash.config | awk -F '=' '{print $2}' | sed "s/\"//g")
     oldVersion=$(grep -i "version" ${clash_data_dir}/clash.config | awk -F '=' '{print $2}' | sed "s/\"//g")
     newVersion=$(grep -i "version" ${MODPATH}/clash/clash.config | awk -F '=' '{print $2}' | sed "s/\"//g")
     if [ "${oldVersion}" < "${newVersion}" ] && [ ! "${oldVersion}" == "" ];then
         ui_print "- clash.config 文件已存在 跳过覆盖."
         rm -rf ${MODPATH}/clash/clash.config
+    else
+        sed -i "s/global/${mode}/g" ${MODPATH}/clash/clash.config
     fi
 fi
 
