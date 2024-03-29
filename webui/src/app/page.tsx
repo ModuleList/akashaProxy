@@ -31,6 +31,8 @@ interface ClashInfo {
   daemon: number | null,
   webui: string | null,
   log: string | null,
+  iptest: string | null,
+  ipspeed: string | null,
   loading: boolean,
 }
 function ClashCard({ info, setClashInfo, dark }: { info: ClashInfo, setClashInfo: (callback: (info: ClashInfo) => ClashInfo) => void, dark: boolean }) {
@@ -104,14 +106,14 @@ function ClashCard({ info, setClashInfo, dark }: { info: ClashInfo, setClashInfo
           style={bigButtonStyle}
           startIcon={<GpsFixedIcon />}
           color="info"
-          onClick={() => window.location.href = "https://ip.skk.moe/"}
+          onClick={() => window.location.href = info.iptest ?? "https://ip.skk.moe"}
         >IP检查</Button>
 
         <Button variant="contained"
           style={bigButtonStyle}
           startIcon={<SpeedIcon />}
           color="info"
-          onClick={() => window.location.href = "https://fast.com/"}
+          onClick={() => window.location.href = info.ipspeed ?? "https://fast.com"}
         >网络测速</Button>
       </ThemeProvider>
 
@@ -199,7 +201,7 @@ async function deleteCache() {
 }
 
 async function updateInfo(setClashInfo: (callback: (info: ClashInfo) => ClashInfo) => void) {
-  let resultInfo: ClashInfo = { version: null, daemon: null, webui: null, log: null, loading: false };
+  let resultInfo: ClashInfo = { version: null, daemon: null, webui: null, iptest: null, ipspeed: null, log: null, loading: false };
   let running = false;
   // Get clash file name
   let clashFileName = null;
@@ -271,6 +273,28 @@ async function updateInfo(setClashInfo: (callback: (info: ClashInfo) => ClashInf
       console.error(err);
     }
   }
+  // get iptest
+  try {
+    let cmd = `source ${CLASH_PATH}/clash.config && printf "%s" $iptest`;
+    let process = await exec(cmd);
+    if (process.errno != 0) {
+      throw 'Failed to execute `' + cmd + '`: Exit code ' + process.errno;
+    }
+    resultInfo.iptest = process.stdout;
+  } catch (err) {
+    console.error(err);
+  }
+  // get ipspeed
+  try {
+    let cmd = `source ${CLASH_PATH}/clash.config && printf "%s" $ipspeed`;
+    let process = await exec(cmd);
+    if (process.errno != 0) {
+      throw 'Failed to execute `' + cmd + '`: Exit code ' + process.errno;
+    }
+    resultInfo.ipspeed = process.stdout;
+  } catch (err) {
+    console.error(err);
+  }
   // get logs
   try {
     let logProcess = await exec('tail -n 100 ' + CLASH_PATH + '/run/run.logs');
@@ -291,7 +315,7 @@ function saveClashInfo(clashInfo: ClashInfo) {
 }
 
 function loadClashInfo(): ClashInfo {
-  const defaultInfo: ClashInfo = { version: null, daemon: null, webui: null, log: null, loading: true };
+  const defaultInfo: ClashInfo = { version: null, daemon: null, webui: null, log: null, iptest: null, ipspeed: null, loading: true };
   if (typeof window !== "undefined") {
     let clashInfo = window.sessionStorage.getItem('clashInfo');
     if (clashInfo == null) {
@@ -309,7 +333,7 @@ function loadClashInfo(): ClashInfo {
 }
 
 export default function Home() {
-  let [clashInfo, setClashInfo] = useState<ClashInfo>({ version: null, daemon: null, webui: null, log: null, loading: true });
+  let [clashInfo, setClashInfo] = useState<ClashInfo>({ version: null, daemon: null, webui: null, log: null, iptest: null, ipspeed: null, loading: true });
   useEffect(() => saveClashInfo(clashInfo), [clashInfo]);
   useEffect(() => {
     loadClashInfo();
