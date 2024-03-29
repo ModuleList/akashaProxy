@@ -95,46 +95,39 @@ keep_dns() {
 }
 
 upgrade_clash() {
-    log "开始下载 ${Clash_bin_name} 内核 更新速度取决于你的网速..."
-    mkdir -p /data/clash/clashkernel/temp
+    log "正在下载 ${Clash_bin_name} 内核..."
+    mkdir -p ${Clash_data_dir}/clashkernel/temp
     remote_clash_ver=$1
-    general_clash_filename="mihomo-android-arm64-"
+    general_clash_filename="mihomo-android-arm64-v8-"
     if [[ ${cgo} == "true" && ${go120} == "true" ]];then
-        unset remote_clash_ver
-        unset general_clash_filename
         echo "err: 目前无 cgo 和 go120 共存的 ${Clash_bin_name} 内核"
     elif [[ ${cgo} == "true" ]];then
         specific_clash_filename=${general_clash_filename}cgo-${remote_clash_ver}
-        unset remote_clash_ver
-        unset general_clash_filename
     elif [[ ${go120} == "true" ]];then
         specific_clash_filename=${general_clash_filename}go120-${remote_clash_ver}
-        unset remote_clash_ver
-        unset general_clash_filename
     else
         specific_clash_filename=${general_clash_filename}${remote_clash_ver}
-        unset remote_clash_ver
-        unset general_clash_filename
     fi
-
-    curl --connect-timeout 5 -Ls -o /data/clash/clashkernel/temp/clashMeta.gz "${ghproxy}/https://github.com/MetaCubeX/mihomo/releases/latest/download/${specific_clash_filename}.gz"
+    curl --connect-timeout 5 -Ls -o ${Clash_data_dir}/clashkernel/temp/clashMeta.gz "${ghproxy}/https://github.com/MetaCubeX/mihomo/releases/latest/download/${specific_clash_filename}.gz"
+    unset remote_clash_ver
+    unset general_clash_filename
     unset specific_clash_filename
 
-    if [ -f /data/clash/clashkernel/temp/clashMeta.gz ];then
-        ${busybox_path} gunzip -f /data/clash/clashkernel/temp/clashMeta.gz
-        if [ -f /data/clash/clashkernel/temp/clashMeta ];then
-            rm -f /data/clash/clashkernel/clashMeta
-            mv /data/clash/clashkernel/temp/clashMeta /data/clash/clashkernel/
-            rm -rf /data/clash/clashkernel/temp
-            chmod +x /data/clash/clashkernel/clashMeta
+    if [ -f ${Clash_data_dir}/clashkernel/temp/clashMeta.gz ];then
+        ${busybox_path} gunzip -f ${Clash_data_dir}/clashkernel/temp/clashMeta.gz
+        if [ -f ${Clash_data_dir}/clashkernel/temp/clashMeta ];then
+            rm -f ${Clash_data_dir}/clashkernel/clashMeta
+            mv ${Clash_data_dir}/clashkernel/temp/clashMeta ${Clash_data_dir}/clashkernel/
+            rm -rf ${Clash_data_dir}/clashkernel/temp
+            chmod +x ${Clash_data_dir}/clashkernel/clashMeta
             log "info: 更新完成"
         else
-            rm -rf /data/clash/clashkernel/temp
+            rm -rf ${Clash_data_dir}/clashkernel/temp
             log "err: 更新失败, 请自行前往 GitHub 项目地址下载 → https://github.com/MetaCubeX/mihomo/releases"
             return
         fi
     else
-        rm -rf /data/clash/clashkernel/temp
+        rm -rf ${Clash_data_dir}/clashkernel/temp
         log "err: 更新失败, 请自行前往 GitHub 项目地址下载 → https://github.com/MetaCubeX/mihomo/releases"
         return
     fi
@@ -148,7 +141,7 @@ check_clash_ver() {
     fi
     if [[ "${remote_clash_ver}" == "" ]];then
         unset remote_clash_ver
-        log "err: 网络连接失败或超过 API 速率限制"
+        log "err: 网络连接失败"
         return
     fi
 
@@ -162,13 +155,13 @@ check_clash_ver() {
         log "info: 当前为最新版: ${local_clash_ver}"
     elif [[ ${local_clash_ver} == "" ]];then
         log "err: 获取本地版本失败, 最新版为: ${remote_clash_ver}"
-        upgrade_clash $check_clash_ver
+        upgrade_clash $remote_clash_ver
         if [ "$?" = "0" ]; then
             flag=true
         fi
     else
         log "info: 本地版本为: ${local_clash_ver}, 最新版为: ${remote_clash_ver}"
-        upgrade_clash $check_clash_ver
+        upgrade_clash $remote_clash_ver
         if [ "$?" = "0" ]; then
             flag=true
         fi
