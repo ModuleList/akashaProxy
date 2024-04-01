@@ -28,6 +28,7 @@ import CssBaseline from '@mui/material/CssBaseline';
 
 interface ClashInfo {
   version: string | null,
+  versions: string | null,
   daemon: number | null,
   webui: string | null,
   log: string | null,
@@ -119,15 +120,14 @@ function ClashCard({ info, setClashInfo, dark }: { info: ClashInfo, setClashInfo
 
       <Card style={{ padding: '16px', backgroundColor: dark ? '#303030' : '#fafafc', marginTop: "2rem" }}>
         <Stack spacing={1}>
-          <InfoLine title="版本">
+          <InfoLine title="Clash版本">
             {(info.version != null && <Chip label={info.version} color="primary" variant="outlined" size='small' />)}
             {(info.version == null && <Chip label="未知" color="warning" variant="outlined" size='small' />)}
-          </InfoLine>
 
-          <InfoLine title="操作">
-            <div>
-              <Chip label={"删除缓存"} color="primary" size='small' onClick={() => deleteCache()} />
-            </div>
+          </InfoLine>
+          <InfoLine title="模块版本">
+            {(info.versions != null && <Chip label={info.version} color="primary" variant="outlined" size='small' />)}
+            {(info.versions == null && <Chip label="未知" color="warning" variant="outlined" size='small' />)}
           </InfoLine>
 
           {(info.log != null &&
@@ -201,7 +201,7 @@ async function deleteCache() {
 }
 
 async function updateInfo(setClashInfo: (callback: (info: ClashInfo) => ClashInfo) => void) {
-  let resultInfo: ClashInfo = { version: null, daemon: null, webui: null, iptest: null, ipspeed: null, log: null, loading: false };
+  let resultInfo: ClashInfo = { version: null, versions: null, daemon: null, webui: null, iptest: null, ipspeed: null, log: null, loading: false };
   let running = false;
   // Get clash file name
   let clashFileName = null;
@@ -295,6 +295,18 @@ async function updateInfo(setClashInfo: (callback: (info: ClashInfo) => ClashInf
   } catch (err) {
     console.error(err);
   }
+  // get module version
+  try {
+    let cmd = `source ${CLASH_PATH}/clash.config && printf "%s" $Module_version`;
+    let process = await exec(cmd);
+    if (process.errno != 0) {
+      throw 'Failed to execute `' + cmd + '`: Exit code ' + process.errno;
+    }
+    resultInfo.versions = process.stdout;
+  } catch (err) {
+    console.error(err);
+  }
+
   // get logs
   try {
     let logProcess = await exec('tail -n 100 ' + CLASH_PATH + '/run/run.logs');
@@ -315,7 +327,7 @@ function saveClashInfo(clashInfo: ClashInfo) {
 }
 
 function loadClashInfo(): ClashInfo {
-  const defaultInfo: ClashInfo = { version: null, daemon: null, webui: null, log: null, iptest: null, ipspeed: null, loading: true };
+  const defaultInfo: ClashInfo = { version: null, versions: null, daemon: null, webui: null, log: null, iptest: null, ipspeed: null, loading: true };
   if (typeof window !== "undefined") {
     let clashInfo = window.sessionStorage.getItem('clashInfo');
     if (clashInfo == null) {
@@ -333,7 +345,7 @@ function loadClashInfo(): ClashInfo {
 }
 
 export default function Home() {
-  let [clashInfo, setClashInfo] = useState<ClashInfo>({ version: null, daemon: null, webui: null, log: null, iptest: null, ipspeed: null, loading: true });
+  let [clashInfo, setClashInfo] = useState<ClashInfo>({ version: null, versions: null, daemon: null, webui: null, log: null, iptest: null, ipspeed: null, loading: true });
   useEffect(() => saveClashInfo(clashInfo), [clashInfo]);
   useEffect(() => {
     loadClashInfo();
