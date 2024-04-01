@@ -190,8 +190,9 @@ start_clash() {
         fi
     else
         if [ ${Clash_bin_name} == "clashMeta" ];then
-            log "err: ${Clash_bin_name}内核丢失. 正在更新.."
-            ${scripts_dir}/clash.tool -c
+            log "err: ${Clash_bin_name}内核丢失 正在更新..."
+            ${scripts_dir}/clash.tool -u
+            start_clash
         else
             log "err: ${Clash_bin_name}内核丢失."
         fi

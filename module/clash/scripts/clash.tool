@@ -284,15 +284,20 @@ update_pre() {
     flag=false
     if [ $Geo_auto_update != "true" ];then
         if [ ${auto_updateGeoIP} == "true" ] && [ ${auto_updateGeoSite} == "true" ]; then
-            curl -X POST -d '{"path": "", "payload": ""}' http://127.0.0.1:${Clash_ui_port}/configs/geo
+            if [ -f "${Clash_pid_file}" ];then
+                curl -X POST -d '{"path": "", "payload": ""}' http://127.0.0.1:${Clash_ui_port}/configs/geo
+            fi
         fi
     fi
     if [ ${auto_updateclashMeta} == "true" ]; then
         check_clash_ver
+        flag=true
     fi
     if [ -f "${Clash_pid_file}" ] && [ ${flag} == true ]; then
         if [ "${restart_update}" == "true" ];then
             restart_clash
+        else
+            reload
         fi
     fi
 
@@ -334,9 +339,6 @@ limit_clash() {
 
 while getopts ":kfmpusl" signal; do
     case ${signal} in
-    c)
-        check_clash_ver
-        ;;
     u)
         update_pre
         ;;
