@@ -126,7 +126,7 @@ function ClashCard({ info, setClashInfo, dark }: { info: ClashInfo, setClashInfo
 
           </InfoLine>
           <InfoLine title="模块版本">
-            {(info.versions != null && <Chip label={info.version} color="primary" variant="outlined" size='small' />)}
+            {(info.versions != null && <Chip label={info.versions} color="primary" variant="outlined" size='small' />)}
             {(info.versions == null && <Chip label="未知" color="warning" variant="outlined" size='small' />)}
           </InfoLine>
 
