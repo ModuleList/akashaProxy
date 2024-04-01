@@ -45,8 +45,8 @@ edit_tun() {
                 ip4list="${ip4list}\n    - ${appuid}"
                 continue
             fi
-            if [ "$(awk '$1~/'^"${package}"$'/{print $2}' ${system_packages_file})" == "" ]; then
-                log "warn: ${package}未找到."
+            if [ "$(grep ${appuid} ${system_packages_file})" == "" ];then
+                log "warn: ${appuid}未找到."
                 continue
             fi
             uidlist="${uidlist}\n    - ${appuid}"
