@@ -256,6 +256,9 @@ apply_rules() {
     fi
 
     ${iptables_wait} -t mangle -N FILTER_LOCAL_IP
+    
+    ${iptables_wait} -t mangle -A FILTER_LOCAL_IP -s 127.0.0.1 -j ACCEPT
+
 
     ${iptables_wait} -t mangle -A PREROUTING -j FILTER_LOCAL_IP
     ${iptables_wait} -t mangle -A OUTPUT -j FILTER_LOCAL_IP
@@ -277,6 +280,8 @@ apply_rules() {
 
         ${ip6tables_wait} -t mangle -N FILTER_LOCAL_IP
     
+        ${ip6tables_wait} -t mangle -A FILTER_LOCAL_IP -s ::1 -j ACCEPT
+
         ${ip6tables_wait} -t mangle -A PREROUTING -j FILTER_LOCAL_IP
         ${ip6tables_wait} -t mangle -A OUTPUT -j FILTER_LOCAL_IP
 
