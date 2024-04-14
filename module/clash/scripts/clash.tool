@@ -283,10 +283,11 @@ port_detection() {
 update_pre() {
     flag=false
     if [ $Geo_auto_update != "true" ];then
-        if [ ${auto_updateGeoIP} == "true" ] && [ ${auto_updateGeoSite} == "true" ]; then
-            if [ -f "${Clash_pid_file}" ];then
-                curl -X POST -d '{"path": "", "payload": ""}' http://127.0.0.1:${Clash_ui_port}/configs/geo
-            fi
+        if [ ${auto_updateGeoIP} == "true" ];then
+            update_file ${GeoIP_url} ${Clash_GeoIP_file}
+        fi
+        if [ ${auto_updateGeoSite} == "true" ]; then
+            update_file ${GeoSite_url} ${Clash_GeoSite_file}
         fi
     fi
     if [ ${auto_updateclashMeta} == "true" ]; then
@@ -296,8 +297,6 @@ update_pre() {
     if [ -f "${Clash_pid_file}" ] && [ ${flag} == true ]; then
         if [ "${restart_update}" == "true" ];then
             restart_clash
-        else
-            reload
         fi
     fi
 
