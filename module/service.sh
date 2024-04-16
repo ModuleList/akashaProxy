@@ -22,5 +22,3 @@ crond -c ${Clash_run_path}
 chmod -R 6755 ${Clash_data_dir}/clashkernel
 
 nohup ${scripts_dir}/clash.service -s && ${scripts_dir}/clash.iptables -s
-
-inotifyd ${scripts_dir}/clash.inotify ${module_dir} >> /dev/null &
