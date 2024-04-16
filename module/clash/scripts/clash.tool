@@ -108,7 +108,11 @@ upgrade_clash() {
     else
         specific_clash_filename=${general_clash_filename}${remote_clash_ver}
     fi
-    curl --connect-timeout 5 -Ls -o ${Clash_data_dir}/clashkernel/temp/clashMeta.gz "${ghproxy}/https://github.com/MetaCubeX/mihomo/releases/latest/download/${specific_clash_filename}.gz"
+    if [ ${alpha} == "true" ];then
+        curl --connect-timeout 5 -Ls -o ${Clash_data_dir}/clashkernel/temp/clashMeta.gz "${ghproxy}https://github.com/MetaCubeX/mihomo/releases/download/Prerelease-Alpha/${specific_clash_filename}.gz"
+    else
+        curl --connect-timeout 5 -Ls -o ${Clash_data_dir}/clashkernel/temp/clashMeta.gz "${ghproxy}https://github.com/MetaCubeX/mihomo/releases/latest/download/${specific_clash_filename}.gz"
+    fi
     unset remote_clash_ver
     unset general_clash_filename
     unset specific_clash_filename
@@ -135,9 +139,9 @@ upgrade_clash() {
 
 check_clash_ver() {
     if [[ "${alpha}" == "true" ]];then
-        remote_clash_ver=$(curl --connect-timeout 5 -Ls "${ghproxy}/https://github.com/MetaCubeX/mihomo/releases/download/Prerelease-Alpha/version.txt")
+        remote_clash_ver=$(curl --connect-timeout 5 -Ls "${ghproxy}https://github.com/MetaCubeX/mihomo/releases/download/Prerelease-Alpha/version.txt")
     else
-        remote_clash_ver=$(curl --connect-timeout 5 -Ls "${ghproxy}/https://github.com/MetaCubeX/mihomo/releases/latest/download/version.txt")
+        remote_clash_ver=$(curl --connect-timeout 5 -Ls "${ghproxy}https://github.com/MetaCubeX/mihomo/releases/latest/download/version.txt")
     fi
     if [[ "${remote_clash_ver}" == "" ]];then
         unset remote_clash_ver
