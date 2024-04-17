@@ -19,7 +19,7 @@ all: default \
 	build-webui pack
 
 pack:
-	echo "id=Clash_For_Magisk\nname=akashaProxy\nversion="$(shell TZ=Asia/Shanghai date "+%Y%m%d%H%M%S")"-"$(shell git rev-parse --short HEAD)"\nversionCode="$(shell TZ=Asia/Shanghai date "+%Y%m%d%H%M%S")"\nauthor=heinu\ndescription=akasha terminal transparent proxy module that supports tproxy and tun and adds many easy-to-use features. Compatible with Magisk/KernelSU">module/module.prop
+	echo "id=Clash_For_Magisk\nname=akashaProxy\nversion="$(shell git rev-parse --short HEAD)"\nversionCode="$(shell TZ=Asia/Shanghai date "+%Y%m%d%H%M%S")"\nauthor=heinu\ndescription=akasha terminal transparent proxy module that supports tproxy and tun and adds many easy-to-use features. Compatible with Magisk/KernelSU">module/module.prop
 	cd module && zip -r ../$(NAME).zip *
 
 default:
