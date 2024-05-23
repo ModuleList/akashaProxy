@@ -80,10 +80,8 @@ edit_tun() {
         fi
         addition="${addition}${uid}${ip4}${ip6}"
     fi
-    if [ "$Clash_tun_status" == "true" ];then
-        sed -i "${Clash_tun_line}a\  ${addition}" ${temporary_config_file}
-        log "info: 已自动覆写clash配置"
-    fi
+    sed -i "${Clash_tun_line}a\  ${addition}" ${temporary_config_file}
+    log "info: 已自动覆写clash配置"
 }
 
 start_clash() {
@@ -238,8 +236,10 @@ start_clash() {
         log "info: 当前腾讯系免流ip:${txmlip}"
     fi
     
-    if [ "$Clash_tun_status" == "true" ] || [ "${auto_config}" == "true" ];then
-        edit_tun
+    if [ "${Clash_tun_status}" == "true" ];then
+        if [ "${auto_config}" == "true" ];then
+            edit_tun
+        fi
     fi
     
     if [ ${ml} == "true" ];then
