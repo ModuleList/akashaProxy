@@ -37,12 +37,8 @@ edit_tun() {
         apps=`cat ${filter_packages_file} | sort -u`
 
         for appuid in ${apps} ; do
-            if [ "$(grep ":" <<< ${appuid})" ];then
-                ip6list="${ip6list}\n    - ${appuid}"
-                continue
-            fi
-            if [ "$(grep "[0-9].*\." <<< ${appuid})" ];then
-                ip4list="${ip4list}\n    - ${appuid}"
+            if [ "$(grep ":" <<< ${appuid})" ] && [ "$(grep "[0-9].*\." <<< ${appuid})" ];then
+                iplist="${iplist}\n    - ${appuid}"
                 continue
             fi
             if [ "$(grep ${appuid} ${system_packages_file})" == "" ];then
@@ -61,24 +57,18 @@ edit_tun() {
             if [ "${uidlist}" != "" ]; then
                 uid="\n  exclude-package:${uidlist}"
             fi
-            if [ "${ip4list}" != "" ]; then
-                ip6="\n  inet6-route-exclude-address:${ip4list}"
-            fi
-            if [ "${ip6list}" != "" ]; then
-                ip4="\n  inet4-route-exclude-address:${ip6list}"
+            if [ "${iplist}" != "" ]; then
+                ipline="\n  route-address:${iplist}"
             fi
         elif [ "${mode}" == "whitelist" ] ; then
             if [ "${uidlist}" != "" ]; then
                 uid="\n  include-package:${uidlist}"
             fi
-            if [ "${ip6list}" != "" ]; then
-                ip6="\n  inet6-route-address:${ip6list}"
-            fi
-            if [ "${ip4list}" != "" ]; then
-                ip4="\n  inet4-route-address:${ip4list}"
+            if [ "${iplist}" != "" ]; then
+                ipline="\n  inet4-route-address:${iplist}"
             fi
         fi
-        addition="${addition}${uid}${ip4}${ip6}"
+        addition="${addition}${uid}${ipline}"
     fi
     sed -i "${Clash_tun_line}a\  ${addition}" ${temporary_config_file}
     log "info: 已自动覆写clash配置"

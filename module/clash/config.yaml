@@ -71,9 +71,6 @@ proxies:
 # https://docs.metacubex.one/
 # https://clash-meta.wiki
 
-# 官方clash配置(纯英文)
-# https://github.com/Dreamacro/clash/wiki/Configuration#introduction
-
 #预设
 p: &p
   type: http
