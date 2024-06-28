@@ -87,6 +87,7 @@ if [ -f "${clash_data_dir}/clash.config" ];then
         rm -rf ${MODPATH}/clash/clash.config
     else
         sed -i "s/global/${mode}/g" ${MODPATH}/clash/clash.config
+        cp -Rf ${clash_data_dir}/clash.config ${clash_data_dir}/clash.config.old
     fi
 fi
 

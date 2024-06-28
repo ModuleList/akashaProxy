@@ -86,10 +86,7 @@ edit_tun() {
 
 start_clash() {
     mkdir -p ${Clash_run_path}
-    if [[ $(magisk -v | grep "delta") ]] && [[ $(magisk -v | grep "kitsune") ]];then
-        log "info: 不支持 magisk delta与magisk kitsune"
-        exit 1
-    fi
+    cp -f ${Clash_config_file} ${temporary_config_file}
 
     if [ ${adguard} == "true" ];then
         if [ ! -f "${Adguard_bin_path}" ];then
@@ -102,7 +99,6 @@ start_clash() {
             exit 1
         fi
     
-    cp -f ${Clash_config_file} ${temporary_config_file}
     
     if [ "${ipv6}" = "false" ] ; then
         for net in /proc/sys/net/ipv6/conf/{wlan*,*data*} ; do
@@ -171,7 +167,7 @@ start_clash() {
             echo "${update_subcriptInterval} ${scripts_dir}/clash.tool -s" >> ${Clash_run_path}/root \
             && log "info: 自动更新订阅定时已开启."
         fi
-        if [ "${auto_updateclashMeta}" == "true" ] || [ "${Geo_auto_update}" != "true"]; then
+        if [ "${auto_updateclashMeta}" == "true" ] || [ "${Geo_auto_update}" != "true" ]; then
             echo "${update_geoXInterval} ${scripts_dir}/clash.tool -u" >> ${Clash_run_path}/root \
             && log "info: 自动更新clashMeta内核定时已开启."
         else
@@ -196,12 +192,6 @@ start_clash() {
     if [ ! -f ${Clash_config_file} ];then
         log "err: 缺少config.yaml 订阅(节点)配置文件."
         exit 1
-    fi
-    if [ "${Split}" == "true" ];then
-        if [ ! -f ${template_file} ];then
-            log "err: 缺少clash.yaml clash配置文件."
-            exit 1
-        fi
     fi
     
     if [ ${ml} == "true" ];then
@@ -265,7 +255,7 @@ start_clash() {
             fi
             nohup ${busybox_path} setuidgid ${Clash_user_group} ${Clash_bin_path} -d ${Clash_data_dir} -f ${temporary_config_file} > /data/clash/run/kernel.log 2>&1 &
             echo "$(${busybox_path} pidof ${Clash_bin_path})">${Clash_pid_file}
-            cp -Rf /data/clash/* /data/clash.old/
+            cp -Rf /data/clash /data/clash.old
             log "info: 代理模式:${mode}"
             if [ ${adguard} == "true" ];then
                 log "info: adguard home已启动"
