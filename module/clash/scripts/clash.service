@@ -75,6 +75,17 @@ edit_tun() {
 }
 
 start_clash() {
+
+    if [ -f "${Clash_config_file}.example" ];then
+        log "err: 请将预设配置(clash.yaml.example)重命名为clash.yaml后填写正确配置."
+        exit 1
+    fi
+
+    if [ ! -f ${Clash_config_file} ];then
+        log "err: 缺少config.yaml 配置文件."
+        exit 1
+    fi
+
     mkdir -p ${Clash_run_path}
     cp -f ${Clash_config_file} ${temporary_config_file}
 
@@ -177,10 +188,6 @@ start_clash() {
         else
             log "err: ${Clash_bin_name}内核丢失."
         fi
-        exit 1
-    fi
-    if [ ! -f ${Clash_config_file} ];then
-        log "err: 缺少config.yaml 订阅(节点)配置文件."
         exit 1
     fi
     

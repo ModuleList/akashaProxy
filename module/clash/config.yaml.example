@@ -68,8 +68,7 @@ dns:
 
 proxies:
 # clashMeta配置参考可以看看这个wiki
-# https://docs.metacubex.one/
-# https://clash-meta.wiki
+# https://wiki.metacubex.one
 
 #预设
 p: &p
@@ -82,10 +81,11 @@ p: &p
 
 
 # 代理提供(订阅)组
+# url 里填写自己的订阅,名称不能重复
 proxy-providers:
   机场1: #机场名
     <<: *p
-    url: "这里填机场订阅"
+    url: ""
     # path: ./proxy_providers/jichang1.yaml #指定保存路径 非必填
 
   # 机场2: #机场名
@@ -124,9 +124,6 @@ proxy-groups:
 
 # 分流规则提供(订阅)组
 rule-providers:
-# 秋风广告规则Clash版本
-# Github：https://github.com/TG-Twilight/AWAvenue-Ads-Rule
-# 此为域名拦截规则，请根据实际情况，自行设置为REJECT/广告拦截之类的分组。
   AWAvenue:
     type: http
     behavior: domain
@@ -137,9 +134,8 @@ rule-providers:
 
 # 分流规则
 rules:
-  - AND,(AND,(DST-PORT,443),(NETWORK,UDP)),(NOT,((GEOSITE,cn))),REJECT-DROP # 禁用quic(不包括国内)
-  - RULE-SET,AWAvenue,REJECT-DROP
+  - RULE-SET,AWAvenue,REJECT
   - GEOSITE,cn,DIRECT
-  - GEOIP,CN,DIRECT
+  - GEOIP,CN,DIRECT,no-resolve
   - MATCH,proxy
 

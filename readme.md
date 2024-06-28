@@ -1,89 +1,61 @@
-## akashaProxy
+##akashaProxy
 
-[中文](./readme_zh.md) | English
+Chinese | [English](./readme.md)
 
 
 akashaProxy is a Magisk/KernelSU module derived from ~~mihomo~~clashMeta
 
-The name comes from the AkashaSystem of [clashMeta documentation](https://wiki.metacubex.one) modified
+The name is modified from the void terminal of [clashMeta document](https://wiki.metacubex.one)
+
+~~The Chinese name should be called `Void Agent`~~
+
 ---
 
-**99% of the problems in this module basically come from the clash configuration error or the plug-in configuration error**
+**99% of the problems with this module basically come from clash configuration errors or plug-in configuration errors**
 
-**Please make good use of clash logs and search engines**
+**Please make good use of search engines and logs**
 
-## Module path:
+## Configuration:
 
-**Work path: /data/clash/**
+**Working path:/data/clash/**
 
-`clash.config` : Module start config
+`clash.config` : module startup configuration
 
-`clash.yaml` : Clash config(global configuration and dns configuration)
+`config.yaml.`:clash configuration file
 
-`config.yaml` : Clash config(other)
+`packages.list` : Black/white list for proxying
 
-`packages.list` : proxy black/white list packages list
+yacd management panel: 127.0.0.1:9090/ui (default)
 
-Admin panel: 127.0.0.1:9090/ui (default)
+>Rename config.yaml.example to config.yaml and fill in the configuration file, or use your own configuration file
 
-
-```
-├── adguard // AdGuardHome bin dir
-│   ├── AdGuardHome
-├── clashkernel // Kernel bin dir
-│   ├── clashMeta 
-├── scripts // Module startup script
-│   ├── clash.inotify
-│   ├── clash.iptables
-│   ├── clash.service
-│   └── clash.tool
-├── tools
-│   ├── DeleteCache.sh // Clear cache of Google apps and other apps
-│   ├── DownloadAdGuardHome.sh // Download and install the AdGuardHome plugin
-│   ├── reload.sh // reload config file
-│   ├── start.sh // Start module
-│   └── stop.sh // Stop module
-├── yacd
-│   ├── // yacd-Meta Panel source
-├── run
-│   ├── // Module running dir
-├── bin
-│   ├── // Module internal tool dir
-├── GeoSite.dat
-├── GeoIP.dat
-├── clash.config
-├── clash.yaml
-├── config.yaml
-└── packages.list
-```
-
-clashMeta Tutorial:
+clash tutorial:
 https://wiki.metacubex.one
 https://clash-meta.wiki
 
-## start and stop
+## Start and stop
 
 start:
-```
+````
 /data/clash/script/clash.service -s && /data/clash/script/clash.iptables -s
-```
+````
 
 stop:
-```
+````
 /data/clash/script/clash.service -k && /data/clash/script/clash.iptables -k
-```
+````
 
-You can also use [dashboard](https://t.me/MagiskChangeKing)
+You can also use [dashboard](https://t.me/MagiskChangeKing) to manage startup and shutdown or KernelSU webUI control
 
-## build
+## Compile
 
-run `make` Compile and package the module
-```
+Execute `make` to compile and package the module
+````
 make
-```
-> The armeabi-v7a architecture and arm64-v8a architecture are built by default under the android platform.
+````
+> The armeabi-v7a architecture and arm64-v8a architecture are built by default under the android platform
 
-## release
+## Publish
 
 [Telegram](https://t.me/akashaProxy)
-[Github Action(Need to decompress)](https://github.com/ModuleList/akashaProxy/actions)
+[Github workflow (requires decompression)](https://github.com/ModuleList/akashaProxy/actions)
