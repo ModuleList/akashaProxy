@@ -212,10 +212,6 @@ find_packages_uid() {
         fi
     fi
     for package in $uids; do
-        if [ "${Clash_enhanced_mode}" == "fake-ip" ] && [ "${Clash_tun_status}" != "true" ]; then
-            log "warn: Tproxy模式下fake-ip不可使用黑白名单."
-            exit 1
-        fi
         if [ "$(grep ":" <<< ${package})" ];then
             echo "${package}" >> ${appuid_file}
             if [ "${mode}" = "blacklist" ]; then
@@ -307,16 +303,7 @@ update_pre() {
 }
 
 reload() {
-    if [ "${Split}" == "true" ];then
-        cp -f ${template_file} ${temporary_config_file}.swp && echo "\n" >> ${temporary_config_file}.swp
-        sed -n -E '/^proxies:.*$/,$p' ${Clash_config_file} >> ${temporary_config_file}.swp
-        echo "\n" >> ${temporary_config_file}.swp
-        sed -i '/^[  ]*$/d' ${temporary_config_file}.swp
-        mv -f ${temporary_config_file}.swp ${temporary_config_file}
-    else
-        cp -f ${Clash_config_file} ${temporary_config_file}
-    fi
-
+    cp -f ${Clash_config_file} ${temporary_config_file}
     curl -X PUT -d '{"configs": ["${temporary_config_file}"]}' http://127.0.0.1:${Clash_ui_port}/configs?force=true
 }
 
