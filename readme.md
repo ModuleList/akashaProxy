@@ -1,6 +1,6 @@
 ##akashaProxy
 
-Chinese | [English](./readme.md)
+Chinese | [中文](./readme_zh.md)
 
 
 akashaProxy is a Magisk/KernelSU module derived from ~~mihomo~~clashMeta
