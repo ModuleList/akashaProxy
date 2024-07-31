@@ -45,7 +45,7 @@ https://clash-meta.wiki
 /data/clash/script/clash.service -k && /data/clash/script/clash.iptables -k
 ````
 
-您还可以使用[dashboard](https://t.me/MagiskChangeKing)管理启停 Or KernelSU’s webUI control
+您还可以使用[dashboard](https://t.me/MagiskChangeKing)管理启停或者使用KernelSU webUI
 
 ## 编译
 
