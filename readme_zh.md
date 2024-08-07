@@ -37,12 +37,12 @@ https://clash-meta.wiki
 
 开始：
 ````
-/data/clash/script/clash.service -s && /data/clash/script/clash.iptables -s
+/data/clash/scripts/clash.service -s && /data/clash/scripts/clash.iptables -s
 ````
 
 停止：
 ````
-/data/clash/script/clash.service -k && /data/clash/script/clash.iptables -k
+/data/clash/scripts/clash.service -k && /data/clash/scripts/clash.iptables -k
 ````
 
 您还可以使用[dashboard](https://t.me/MagiskChangeKing)管理启停或者使用KernelSU webUI

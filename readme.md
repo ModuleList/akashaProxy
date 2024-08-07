@@ -1,4 +1,4 @@
-##akashaProxy
+## akashaProxy
 
 English | [中文](./readme_zh.md)
 
@@ -37,12 +37,12 @@ https://clash-meta.wiki
 
 start:
 ````
-/data/clash/script/clash.service -s && /data/clash/script/clash.iptables -s
+/data/clash/scripts/clash.service -s && /data/clash/scripts/clash.iptables -s
 ````
 
 stop:
 ````
-/data/clash/script/clash.service -k && /data/clash/script/clash.iptables -k
+/data/clash/scripts/clash.service -k && /data/clash/scripts/clash.iptables -k
 ````
 
 You can also use [dashboard](https://t.me/MagiskChangeKing) to manage startup and shutdown or KernelSU webUI control
