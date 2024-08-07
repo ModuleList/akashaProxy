@@ -1,4 +1,4 @@
-##akashaProxy
+## akashaProxy
 
 English | [中文](./readme_zh.md)
 
