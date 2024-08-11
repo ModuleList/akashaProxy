@@ -221,7 +221,7 @@ start_clash() {
     fi
     
     if [ "${Clash_tun_status}" == "true" ];then
-        if [ "${auto_config}" == "true" ] || [  "${auto_tun}" == "true" ];then
+        if [ "${auto_config}" == "true" ] && [  "${auto_tun}" == "true" ];then
             edit_tun
         fi
     fi
