@@ -9,24 +9,8 @@ on:
 
 jobs:
 
-  build-webui:
-    runs-on: ubuntu-latest
-    steps:
-    - uses: actions/checkout@v4
-
-    - name: Setup Node.js
-      uses: actions/setup-node@v3
-      with:
-        node-version: '20'
-
-    - name: Build WebUI
-      run: |
-        make build-webui
-
-
   build-arm64:
     runs-on: ubuntu-latest
-    needs: build-webui
     steps:
     - uses: actions/checkout@v4
 
@@ -58,6 +42,15 @@ jobs:
         ndk-version: r26b
         add-to-path: true
 
+    - name: Setup Node.js
+      uses: actions/setup-node@v3
+      with:
+        node-version: '20'
+
+    - name: Build WebUI
+      run: |
+        make build-webui
+
     - name: Build Clash Meta - Arm64
       env:
         ANDROID_NDK_HOME: ${{ steps.setup-ndk.outputs.ndk-path }}
@@ -83,7 +76,6 @@ jobs:
 
   build-arm32:
     runs-on: ubuntu-latest
-    needs: build-webui
     steps:
     - uses: actions/checkout@v4
 
@@ -114,6 +106,15 @@ jobs:
       with:
         ndk-version: r26b
         add-to-path: true
+
+    - name: Setup Node.js
+      uses: actions/setup-node@v3
+      with:
+        node-version: '20'
+
+    - name: Build WebUI
+      run: |
+        make build-webui
 
     - name: Build Clash Meta - Arm32
       env:
@@ -127,6 +128,8 @@ jobs:
 
     - name: Pack Module Arm32
       run: |
+        make pack
+        mv akashaProxy.zip akashaProxy-arm32-${{ env.buildSha }}.zip
         mkdir -p out/akashaProxy-arm32-${{ env.buildSha }}
         cp -Rf module/* out/akashaProxy-arm32-${{ env.buildSha }}/
         
@@ -138,7 +141,6 @@ jobs:
 
   build-x86:
     runs-on: ubuntu-latest
-    needs: build-webui
     steps:
     - uses: actions/checkout@v4
 
@@ -169,6 +171,15 @@ jobs:
       with:
         ndk-version: r26b
         add-to-path: true
+
+    - name: Setup Node.js
+      uses: actions/setup-node@v3
+      with:
+        node-version: '20'
+
+    - name: Build WebUI
+      run: |
+        make build-webui
 
     - name: Build Clash Meta - x86_64
       env:
@@ -182,8 +193,11 @@ jobs:
 
     - name: Pack Module x86_64
       run: |
+        make pack
+        mv akashaProxy.zip akashaProxy-x86_64-${{ env.buildSha }}.zip
         mkdir -p out/akashaProxy-x86_64-${{ env.buildSha }}
         cp -Rf module/* out/akashaProxy-x86_64-${{ env.buildSha }}/
+        
         
     - name: Upload x86_64
       uses: actions/upload-artifact@main
@@ -193,7 +207,6 @@ jobs:
 
   build-all:
     runs-on: ubuntu-latest
-    needs: build-webui
     steps:
     - uses: actions/checkout@v4
 
@@ -224,6 +237,15 @@ jobs:
       with:
         ndk-version: r26b
         add-to-path: true
+
+    - name: Setup Node.js
+      uses: actions/setup-node@v3
+      with:
+        node-version: '20'
+
+    - name: Build WebUI
+      run: |
+        make build-webui
 
     - name: Build Clash Meta - Arm64
       env:
@@ -240,7 +262,6 @@ jobs:
         ANDROID_NDK_HOME: ${{ steps.setup-ndk.outputs.ndk-path }}
       run: |
         cd Clash.Meta
-        go mod tidy
         CC=${ANDROID_NDK_HOME}/toolchains/llvm/prebuilt/linux-x86_64/bin/armv7a-linux-androideabi33-clang
         CGO_ENABLED=0 CC=${CC} GOARCH=arm GOOS=android go build -tags ${TAGS} -trimpath -ldflags "${LDFLAGS}" -o ../module/bin/clashMeta-android-armeabi-v7a
         cd ../module/bin && tar -vcjf clashMeta-android-armeabi-v7a.tar.bz2 clashMeta-android-armeabi-v7a && rm -rf clashMeta-android-armeabi-v7a
@@ -251,16 +272,17 @@ jobs:
         ANDROID_NDK_HOME: ${{ steps.setup-ndk.outputs.ndk-path }}
       run: |
         cd Clash.Meta
-        go mod tidy
         CC=${ANDROID_NDK_HOME}/toolchains/llvm/prebuilt/linux-x86_64/bin/x86_64-linux-android33-clang
         CGO_ENABLED=0 CC=${CC} GOARCH=amd64 GOOS=linux go build -tags ${TAGS} -trimpath -ldflags "${LDFLAGS}" -o ../module/bin/clashMeta-android-x86_64
         cd ../module/bin && tar -vcjf clashMeta-android-x86_64.tar.bz2 clashMeta-android-x86_64 && rm -rf clashMeta-android-x86_64
 
     - name: Pack Module armAll
       run: |
+        make pack
+        mv akashaProxy.zip akashaProxy-armAll-${{ env.buildSha }}.zip
         mkdir -p out/akashaProxy-armAll-${{ env.buildSha }}
         cp -Rf module/* out/akashaProxy-armAll-${{ env.buildSha }}/
-        cd module && zip -r ../akashaProxy-armAll-${{ env.buildSha }}.zip *
+        
 
     - name: Upload armAll
       uses: actions/upload-artifact@main
