@@ -95,11 +95,7 @@ start_clash() {
             exit 1
         fi
     fi
-        if [ "${Clash_enhanced_mode}" == "fake-ip" ] && [ "${Clash_tun_status}" != "true" ]; then
-            log "warn: Tproxy模式下fake-ip不可使用黑白名单."
-            exit 1
-        fi
-    
+
     
     if [ "${ipv6}" = "false" ] ; then
         for net in /proc/sys/net/ipv6/conf/{wlan*,*data*} ; do
