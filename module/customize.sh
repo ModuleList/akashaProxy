@@ -14,7 +14,7 @@ if [ ! $KSU ];then
     fi
     
     ui_print "- Magisk version: $MAGISK_VER_CODE"
-    if [ "$MAGISK_VER_CODE" -lt MIN_MAGISK_VERSION ]; then
+    if [ "$MAGISK_VER_CODE" -lt $MIN_MAGISK_VERSION ]; then
         ui_print "*********************************************************"
         ui_print "! 请使用 Magisk alpha 26301+"
         abort "*********************************************************"
@@ -34,12 +34,9 @@ else
 fi
 
 
-status=""
-architecture=""
 system_gid="1000"
 system_uid="1000"
 clash_data_dir="/data/clash"
-modules_dir="/data/adb/modules"
 ABI=$(getprop ro.product.cpu.abi)
 mkdir -p ${clash_data_dir}/run
 mkdir -p ${clash_data_dir}/clashkernel
@@ -63,14 +60,8 @@ fi
 unzip -o "${ZIPFILE}" -x 'META-INF/*' -d ${MODPATH} >&2
 unzip -o "${ZIPFILE}" -x 'clash/*' -d ${MODPATH} >&2
 
-if [ -f "${clash_data_dir}/config.yaml" ];then
-    ui_print "- config.yaml 文件已存在 跳过覆盖."
-    rm -rf ${MODPATH}/clash/config.yaml
-fi
-
-if [ -f "${clash_data_dir}/clash.yaml" ];then
-    ui_print "- clash.yaml 文件已存在 跳过覆盖."
-    rm -rf ${MODPATH}/clash/clash.yaml
+if [ -d "${clash_data_dir}" ];then
+    rm -rf ${MODPATH}/clash/config.yaml.example
 fi
 
 if [ -f "${clash_data_dir}/packages.list" ];then
@@ -115,5 +106,3 @@ ui_print "教程见→https://github.com/ModuleList/akashaProxy"
 ui_print "************************************************"
 ui_print "Telegram Channel: https://t.me/akashaProxy"
 ui_print ""
-ui_print "为了让你能够阅读以上消息，安装进度暂停5秒!"
-sleep 5
