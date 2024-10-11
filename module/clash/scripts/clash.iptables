@@ -446,8 +446,11 @@ while getopts ":sk" signal ; do
                 exit 0
             fi
             if [ "${mode}" == "blacklist" ] || [ "${mode}" == "whitelist" ] || [ "${mode}" == "global" ]; then
-                del_tun
-                flush_rule_rules && flush_rules
+               if [ "${Clash_tun_status}" == "true" ];then
+                    del_tun
+                else
+                    flush_rule_rules && flush_rules
+                fi
                 log "info: iptables规则已清空."
             else
                 exit 0
