@@ -1,0 +1,1 @@
+/data/clash/tools/action.sh

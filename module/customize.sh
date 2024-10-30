@@ -93,6 +93,7 @@ set_perm_recursive ${clash_data_dir} ${system_uid} ${system_gid} 0770 0770
 set_perm_recursive ${clash_data_dir}/scripts ${system_uid} ${system_gid} 0770 0770
 set_perm_recursive ${clash_data_dir}/mosdns ${system_uid} ${system_gid} 0770 0770
 set_perm_recursive ${clash_data_dir}/adguard ${system_uid} ${system_gid} 0770 0770
+set_perm_recursive ${clash_data_dir}/tools ${system_uid} ${system_gid} 0770 0770
 set_perm_recursive ${clash_data_dir}/clashkernel ${system_uid} ${system_gid} 6770 6770
 set_perm  ${clash_data_dir}/mosdns/mosdns  ${system_uid}  ${system_gid}  6770
 set_perm  ${clash_data_dir}/adguard/AdGuardHome  ${system_uid}  ${system_gid}  6770
