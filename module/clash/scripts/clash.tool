@@ -211,6 +211,7 @@ find_packages_uid() {
             uids=$(cat ${filter_packages_file})
         fi
     fi
+    
     for package in $uids; do
         if [ "$(grep ":" <<< ${package})" ];then
             echo "${package}" >> ${appuid_file}
@@ -221,6 +222,7 @@ find_packages_uid() {
             fi
             continue
         fi
+
         if [ "$(grep "[0-9].*\." <<< ${package})" ];then
             echo "${package}" >> ${appuid_file}
             if [ "${mode}" = "blacklist" ]; then
@@ -230,16 +232,24 @@ find_packages_uid() {
             fi
             continue
         fi
+
         nhd=$(awk -F ">" '/^[0-9]+>$/{print $1}' <<< "${package}")
         if [ "${nhd}" != "" ]; then
             hd=${nhd}
             continue
         fi
+
         uid=$(awk '$1~/'^"${package}"$'/{print $2}' ${system_packages_file})
         if [ "${uid}" == "" ]; then
-            log "warn: ${package}未找到."
-            continue
+            uids=$(dumpsys package ${package} | grep appId= | awk -F= '{print $2}')
+            if [ "${uids}" == "" ]; then
+                log "warn: ${package}未找到."
+                continue
+            else
+                uid=uids
+            fi
         fi
+
         echo "${hd}${uid}" >> ${appuid_file}.tmp
         if [ "${mode}" = "blacklist" ]; then
             log "info: ${hd}${package}已过滤."
