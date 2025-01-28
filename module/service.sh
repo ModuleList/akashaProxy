@@ -3,7 +3,7 @@ until [ $(getprop init.svc.bootanim) = "stopped" ] ; do
     sleep 5
 done
 
-if [[ $(magisk -v | grep "delta") ]] && [[ $(magisk -v | grep "kitsune") ]];then
+if [[ $(magisk -v | grep "delta") ]] || [[ $(magisk -v | grep "kitsune") ]];then
     echo "">remove
     exit 1
 fi
