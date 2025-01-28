@@ -145,8 +145,10 @@ start_clash() {
         mkdir -p ${Clash_run_path}
         chown ${Clash_user_group} ${Clash_bin_path}
         chmod ${Clash_permissions} ${Clash_bin_path}
-        chown ${Clash_user_group} ${Adguard_bin_path}
-        chmod ${Clash_permissions} ${Adguard_bin_path}
+        if [ ${adguard} == "true" ];then
+            chown ${Clash_user_group} ${Adguard_bin_path}
+            chmod ${Clash_permissions} ${Adguard_bin_path}
+        fi
         chown ${Clash_user_group} ${temporary_config_file}
         chmod 0644 ${temporary_config_file}
         rm -rf ${Clash_run_path}/root
