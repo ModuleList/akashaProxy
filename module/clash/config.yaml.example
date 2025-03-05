@@ -56,27 +56,20 @@ dns:
   enhanced-mode: redir-host
   fake-ip-range: 10.100.0.0/8
   default-nameserver:
-    - 8.8.4.4
+    - 119.29.29.29
     - 223.5.5.5
   nameserver:
     - https://120.53.53.53/dns-query
     - https://223.5.5.5/dns-query
-  fallback:
-    - "https://dns.cloudflare.com/dns-query#proxy"
-    - "https://dns.google/dns-query#proxy"
   proxy-server-nameserver:
     - https://223.5.5.5/dns-query
-  fallback-filter:
-    geoip: true
-    geoip-code: CN
-    geosite:
-      - gfw
-    ipcidr:
-      - 240.0.0.0/4
-    domain:
-      - '+.google.com'
-      - '+.facebook.com'
-      - '+.youtube.com'
+  nameserver-policy:
+    "geosite:cn,private,apple":
+      - https://120.53.53.53/dns-query
+      - https://223.5.5.5/dns-query
+    "geosite:geolocation-!cn,gfw":
+      - "https://dns.cloudflare.com/dns-query#proxy"
+      - "https://dns.google/dns-query#proxy"
 
 proxies:
 # clashMeta配置参考可以看看这个wiki
@@ -146,7 +139,8 @@ rule-providers:
 
 # 分流规则
 rules:
-  - RULE-SET,AWAvenue,REJECT
+  - RULE-SET,AWAvenue,REJECT #去广告
+  - GEOSITE,category-ads-all,REJECT #去广告
   - GEOSITE,cn,DIRECT
   - GEOIP,CN,DIRECT,no-resolve
   - MATCH,proxy
