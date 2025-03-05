@@ -1,5 +1,5 @@
-http-port: 7890
-socks-port: 7891
+#http-port: 7890
+#socks-port: 7891
 redir-port: 7892
 tproxy-port: 7893
 allow-lan: true
@@ -45,26 +45,38 @@ tun:
   device: Meta
   stack: mixed
   dns-hijack:
-    - any:53
+    - any:1053
   auto-route: true
   auto-detect-interface: true
 
 dns:
   enable: true
-  ipv6: true
   listen: 0.0.0.0:1053
+  ipv6: true
   enhanced-mode: redir-host
-  fake-ip-range: 28.0.0.0/8
+  fake-ip-range: 10.100.0.0/8
+  default-nameserver:
+    - 8.8.4.4
+    - 223.5.5.5
   nameserver:
-    - tls://1.0.0.1
-    - tls://8.8.4.4
-  nameserver-policy:
-    "geosite:cn,private":
-      - https://1.12.12.12/dns-query
-      - https://223.5.5.5/dns-query
-    "geosite:geolocation-!cn":
-      - https://94.140.14.140/dns-query
-      - https://1.0.0.1/dns-query
+    - https://120.53.53.53/dns-query
+    - https://223.5.5.5/dns-query
+  fallback:
+    - "https://dns.cloudflare.com/dns-query#proxy"
+    - "https://dns.google/dns-query#proxy"
+  proxy-server-nameserver:
+    - https://223.5.5.5/dns-query
+  fallback-filter:
+    geoip: true
+    geoip-code: CN
+    geosite:
+      - gfw
+    ipcidr:
+      - 240.0.0.0/4
+    domain:
+      - '+.google.com'
+      - '+.facebook.com'
+      - '+.youtube.com'
 
 proxies:
 # clashMeta配置参考可以看看这个wiki
