@@ -1,5 +1,15 @@
 #!/system/bin/sh
 
+set_tun() {
+    # 统一使用 Meta 作为设备名
+    tun_device="Meta"
+    
+    # 原代码中的 ${tun_device} 替换为 Meta
+    ip -4 route add default dev Meta table ${table_id}
+    
+    # ... 其他代码不变 ...
+}
+
 scripts=`realpath $0`
 scripts_dir=`dirname ${scripts}`
 . /data/clash/clash.config
@@ -14,6 +24,9 @@ create_rule_rules() {
 }
 
 flush_rule_rules() {
+# 添加链存在性检查
+    iptables -t mangle -L CLASH_PRE >/dev/null 2>&1 || return 0
+    ip6tables -t mangle -L CLASH_PRE >/dev/null 2>&1 || return 0
     ip rule del fwmark ${mark_id} table ${table_id}
     ip route flush table ${table_id}
     if [ "${ipv6}" = "true" ] ; then

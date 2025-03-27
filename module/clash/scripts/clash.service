@@ -1,5 +1,24 @@
 #!/system/bin/sh
 
+start_clash() {
+    # ... 其他代码不变 ...
+
+    # 修改启动命令
+    mkdir -p /dev/net
+    mknod /dev/net/tun c 10 200 2>/dev/null
+    chmod 0666 /dev/net/tun
+
+    # 新增等待逻辑
+    echo "等待 TUN 设备初始化..."
+    sleep 1
+    if ! ip link show Meta >/dev/null 2>&1; then
+        log "err: TUN 设备 Meta 未创建成功!"
+        exit 1
+    fi
+
+    # ... 后续代码不变 ...
+}
+
 scripts=`realpath $0`
 scripts_dir=`dirname ${scripts}`
 . /data/clash/clash.config
