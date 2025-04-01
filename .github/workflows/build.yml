@@ -74,6 +74,28 @@ jobs:
         name: akashaProxy-arm64-${{ env.buildSha }}
         path: out/akashaProxy-arm64-${{ env.buildSha }}
 
+    - name: Find ZIP
+      run: |
+          echo "ZIP_FILE=$(find . -name 'akashaProxy-arm64-${{ env.buildSha }}.zip')" >> $GITHUB_ENV
+  
+    - name: Post to Telegram Channel
+      if: github.event_name != 'pull_request' && github.ref == 'refs/heads/master'
+      env:
+        CHANNEL_ID: ${{ secrets.TELEGRAM_TO }}
+        BOT_TOKEN: ${{ secrets.TELEGRAM_TOKEN }}
+        FILE: ${{ env.ZIP_FILE }}
+        COMMIT_MESSAGE: |+
+          **New push to github\!**
+
+          `${{ env.commit }}`
+              
+          by ${{ github.event.head_commit.author.name }}
+          For more architecture see [action](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})
+          See commit detail [here](${{ github.event.head_commit.url }})
+      run: |
+        ESCAPED=$(python3 -c 'import json,os,urllib.parse; print(urllib.parse.quote(json.dumps(os.environ["COMMIT_MESSAGE"])))')
+        curl -v "https://api.telegram.org/bot${BOT_TOKEN}/sendMediaGroup?chat_id=${CHANNEL_ID}&media=%5B%7B%22type%22:%22document%22,%20%22media%22:%22attach://release%22,%22parse_mode%22:%22MarkdownV2%22,%22caption%22:${ESCAPED}%7D%5D" -F release="@${FILE}"
+            
   build-arm32:
     runs-on: ubuntu-latest
     steps:
@@ -290,24 +312,3 @@ jobs:
         name: akashaProxy-armAll-${{ env.buildSha }}
         path: out/akashaProxy-armAll-${{ env.buildSha }}
 
-    - name: Find ZIP
-      run: |
-        echo "ZIP_FILE=$(find . -name 'akashaProxy-armAll-${{ env.buildSha }}.zip')" >> $GITHUB_ENV
-
-    - name: Post to Telegram Channel
-      if: github.event_name != 'pull_request' && github.ref == 'refs/heads/master'
-      env:
-        CHANNEL_ID: ${{ secrets.TELEGRAM_TO }}
-        BOT_TOKEN: ${{ secrets.TELEGRAM_TOKEN }}
-        FILE: ${{ env.ZIP_FILE }}
-        COMMIT_MESSAGE: |+
-          **New push to github\!**
-          
-          `${{ env.commit }}`
-          
-          by ${{ github.event.head_commit.author.name }}
-          For more architecture see [action](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})
-          See commit detail [here](${{ github.event.head_commit.url }})
-      run: |
-        ESCAPED=$(python3 -c 'import json,os,urllib.parse; print(urllib.parse.quote(json.dumps(os.environ["COMMIT_MESSAGE"])))')
-        curl -v "https://api.telegram.org/bot${BOT_TOKEN}/sendMediaGroup?chat_id=${CHANNEL_ID}&media=%5B%7B%22type%22:%22document%22,%20%22media%22:%22attach://release%22,%22parse_mode%22:%22MarkdownV2%22,%22caption%22:${ESCAPED}%7D%5D" -F release="@${FILE}"
