@@ -2,6 +2,16 @@
 
 中文 | [English](./readme.md)
 
+### 使用须知
+
+1. 拥有自主判断/分析能力
+2. 知道如何使用搜索引擎
+3. 拥有阅读官方文档的能力
+4. 拥有基础的Linux知识
+4. 乐于折腾
+
+> 否则不建议您使用本模块
+
 
 akashaProxy 是 ~~mihomo~~clashMeta 衍生的Magisk/KernelSU模块
 

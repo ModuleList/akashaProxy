@@ -107,8 +107,20 @@ set_perm  ${clash_data_dir}/clash.config ${system_uid} ${system_gid} 0770
 set_perm  ${clash_data_dir}/packages.list ${system_uid} ${system_gid} 0770
 
 
-ui_print ""
-ui_print "教程见→https://github.com/ModuleList/akashaProxy"
-ui_print "************************************************"
-ui_print "Telegram Channel: https://t.me/akashaProxy"
-ui_print ""
+ui_print "
+使用须知:
+1. 拥有自主判断/分析能力
+2. 知道如何使用搜索引擎
+3. 拥有阅读官方文档的能力
+4. 拥有基础的Linux知识
+4. 乐于折腾
+
+> 否则不建议您使用本模块
+
+如何使用本模块清查阅→https://github.com/ModuleList/akashaProxy
+如何使用mihomo以及配置文件文档清查阅→https://wiki.metacubex.one/config
+预设配置文件在 /data/clash/config.yaml.example
+请重命名为 config.yaml 后使用DashBoard启动/停止 或者使用tools文件夹下的start.sh/stop.sh
+************************************************
+Telegram Channel: https://t.me/akashaProxy
+"

@@ -3,6 +3,16 @@
 English | [中文](./readme_zh.md)
 
 
+### Instructions for use
+
+1. Possess independent judgment/analysis ability.
+2. Know how to use Google search.
+3. Ability to read official documents.
+4. Have basic knowledge of Linux.
+5. Willing to tinker.
+
+>Otherwise, we do not recommend using this module
+
 akashaProxy is a Magisk/KernelSU module derived from ~~mihomo~~clashMeta
 
 The name is modified from the void terminal of [clashMeta document](https://wiki.metacubex.one)
