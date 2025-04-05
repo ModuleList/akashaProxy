@@ -82,7 +82,7 @@ if [ -f "${clash_data_dir}/clash.config" ];then
     fi
 fi
 
-if [ "$(pm list packages | grep com.dashboard.kotlin)" == ""];
+if [ "$(pm list packages | grep com.dashboard.kotlin)" == ""];then
     pm install -r ${MODPATH}/apk/DashBoard.apk
 fi
 
