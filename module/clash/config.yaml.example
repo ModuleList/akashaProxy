@@ -81,7 +81,7 @@ p: &p
   interval: 1800
   health-check:
     enable: true
-    url: https://cp.cloudflare.com/generate_204
+    url: http://www.msftconnecttest.com/connecttest.txt
     interval: 300
 
 
