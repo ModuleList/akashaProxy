@@ -78,7 +78,7 @@ if [ -f "${clash_data_dir}/clash.config" ];then
         rm -rf ${MODPATH}/clash/clash.config
     else
         sed -i "s/global/${mode}/g" ${MODPATH}/clash/clash.config
-        cp -Rf ${clash_data_dir}/clash.config ${clash_data_dir}/clash.config.old
+        cp -Rvf ${clash_data_dir}/clash.config ${clash_data_dir}/clash.config.old
     fi
 fi
 
@@ -86,7 +86,7 @@ if [ "$(pm list packages | grep com.dashboard.kotlin)" == ""];
     pm install -r ${MODPATH}/apk/DashBoard.apk
 fi
 
-cp -Rf ${MODPATH}/clash/* ${clash_data_dir}/
+cp -RVf ${MODPATH}/clash/* ${clash_data_dir}/
 rm -rf ${MODPATH}/clash
 rm -rf ${MODPATH}/apk
 rm -rf ${MODPATH}/bin
@@ -108,6 +108,7 @@ set_perm  ${clash_data_dir}/packages.list ${system_uid} ${system_gid} 0770
 
 
 ui_print "
+************************************************
 使用须知:
 1. 拥有自主判断/分析能力
 2. 知道如何使用搜索引擎
