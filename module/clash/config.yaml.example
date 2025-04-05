@@ -81,7 +81,7 @@ p: &p
   interval: 1800
   health-check:
     enable: true
-    url: http://www.msftconnecttest.com/connecttest.txt
+    url: https://www.msftconnecttest.com/connecttest.txt
     interval: 300
 
 
