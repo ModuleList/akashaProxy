@@ -81,7 +81,7 @@ p: &p
   interval: 1800
   health-check:
     enable: true
-    url: https://www.msftconnecttest.com/connecttest.txt
+    url: https://captive.apple.com
     interval: 300
 
 
