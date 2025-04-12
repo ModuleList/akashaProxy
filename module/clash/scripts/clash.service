@@ -1,312 +1,285 @@
 #!/system/bin/sh
 
-scripts=`realpath $0`
-scripts_dir=`dirname ${scripts}`
+script_path=$(realpath "$0")
+script_dir=$(dirname "${script_path}")
 . /data/clash/clash.config
-rm -rf ${CFM_logs_file}
-
+rm -rf "${cfm_logs_file}"
 
 update_file() {
-    file="$1"
-    file_temp="${file}.temp"
-    update_url="$2"
+    local file="$1"
+    local file_temp="${file}.temp"
+    local update_url="$2"
 
-    curl -L ${update_url} -o ${file_temp}
+    if ! curl -L --connect-timeout 10 -o "${file_temp}" "${update_url}"; then
+        log "warn: ${file}更新失败 - 下载错误"
+        rm -f "${file_temp}"
+        return 1
+    fi
 
     if [ -f "${file_temp}" ]; then
-        mv -f ${file_temp} ${file}
-        log "info: ${file}更新成功."
+        if ! mv -f "${file_temp}" "${file}"; then
+            log "warn: ${file}更新失败 - 移动文件错误"
+            rm -f "${file_temp}"
+            return 1
+        fi
+        log "info: ${file}更新成功"
+        return 0
     else
-        rm -rf ${file_temp}
-        log "warn: ${file}更新失败"
+        log "warn: ${file}更新失败 - 临时文件不存在"
         return 1
     fi
 }
-edit_tun() {
-    uidlist=""
-    ip4list=""
-    ip6list=""
-    
-    if [ "${Clash_auto_route}" != "true" ];then
-        addition="auto-route: true"
-    else
-        addition=""
-    fi
-    
-    if [ "${mode}" != "global" ]; then
-        apps=`cat ${filter_packages_file} | sort -u`
 
-        for appuid in ${apps} ; do
-            if [ "$(grep ":" <<< ${appuid})" ] && [ "$(grep "[0-9].*\." <<< ${appuid})" ];then
-                iplist="${iplist}\n    - ${appuid}"
-                continue
-            fi
-            if [ "$(grep ${appuid} ${system_packages_file})" == "" ];then
-                log "warn: ${appuid}未找到."
-                continue
-            fi
-            uidlist="${uidlist}\n    - ${appuid}"
-            if [ "${mode}" == "blacklist" ]; then
-                log "info: ${appuid}已排除."
-            else
-                log "info: ${appuid}已代理."
-            fi
-        done
-        
-        if [ "${mode}" == "blacklist" ]; then
-            if [ "${uidlist}" != "" ]; then
-                uid="\n  exclude-package:${uidlist}"
-            fi
-            if [ "${iplist}" != "" ]; then
-                ipline="\n  route-address:${iplist}"
-            fi
-        elif [ "${mode}" == "whitelist" ] ; then
-            if [ "${uidlist}" != "" ]; then
-                uid="\n  include-package:${uidlist}"
-            fi
-            if [ "${iplist}" != "" ]; then
-                ipline="\n  inet4-route-address:${iplist}"
-            fi
-        fi
-        addition="${addition}${uid}${ipline}"
+edit_tun() {
+    local uid_list=""
+    local ip4_list=""
+    local ip6_list=""
+    local addition=""
+
+    if [ "${clash_auto_route}" != "true" ]; then
+        addition="auto-route: true"
     fi
-    sed -i "${Clash_tun_line}a\  ${addition}" ${temporary_config_file}
+
+    if [ "${mode}" != "global" ]; then
+        local apps=$(sort -u "${filter_packages_file}")
+
+        while IFS= read -r appuid; do
+            if [[ "${appuid}" =~ : ]] && [[ "${appuid}" =~ [0-9]+\.[0-9]+\.[0-9]+\.[0-9]+ ]]; then
+                ip4_list="${ip4_list}\n    - ${appuid}"
+                continue
+            fi
+
+            if ! grep -q "^${appuid} " "${system_packages_file}"; then
+                log "warn: ${appuid}未找到"
+                continue
+            fi
+
+            uid_list="${uid_list}\n    - ${appuid}"
+            log "info: ${appuid}已$([ "${mode}" == "blacklist" ] && echo "排除" || echo "代理")"
+        done <<< "${apps}"
+
+        if [ "${mode}" == "blacklist" ]; then
+            [ -n "${uid_list}" ] && addition="${addition}\n  exclude-package:${uid_list}"
+            [ -n "${ip4_list}" ] && addition="${addition}\n  route-address:${ip4_list}"
+        elif [ "${mode}" == "whitelist" ]; then
+            [ -n "${uid_list}" ] && addition="${addition}\n  include-package:${uid_list}"
+            [ -n "${ip4_list}" ] && addition="${addition}\n  inet4-route-address:${ip4_list}"
+        fi
+    fi
+
+    if ! sed -i "${clash_tun_line}a\  ${addition}" "${temporary_config_file}"; then
+        log "err: TUN配置写入失败"
+        return 1
+    fi
     log "info: 已自动覆写clash配置"
 }
 
 start_clash() {
-
-    if [ -f "${Clash_config_file}.example" ];then
-        log "err: 请将预设配置(clash.yaml.example)重命名为clash.yaml后填写正确配置."
-        exit 1
+    if [ -f "${clash_config_file}.example" ]; then
+        log "err: 请将预设配置(clash.yaml.example)重命名为clash.yaml后填写正确配置"
+        return 1
     fi
 
-    if [ ! -f ${Clash_config_file} ];then
-        log "err: 缺少config.yaml 配置文件."
-        exit 1
+    if [ ! -f "${clash_config_file}" ]; then
+        log "err: 缺少config.yaml配置文件"
+        return 1
     fi
 
-    mkdir -p ${Clash_run_path}
-    cp -f ${Clash_config_file} ${temporary_config_file}
+    if [ "${adguard}" == "true" ] && [ ! -f "${adguard_bin_path}" ]; then
+        log "err: 已开启AdGuard Home但未找到可执行文件"
+        return 1
+    fi
 
-    if [ ${adguard} == "true" ];then
-        if [ ! -f "${Adguard_bin_path}" ];then
-            log "err: 已开启 AdGuard Home 拓展但未找到 AdGuard Home 文件!"
-            exit 1
+    for net in /proc/sys/net/ipv6/conf/{wlan*,*data*}; do
+        if [[ "${net}" =~ wlan ]]; then
+            echo $(( ipv6 == "false" ? 0 : 1 )) > "${net}/accept_ra"
+        fi
+        echo $(( ipv6 == "false" ? 1 : 0 )) > "${net}/disable_ipv6"
+    done
+    [ "${ipv6}" = "false" ] || log "info: 已开启代理IPv6"
+    [ "${udp}" = "true" ] && log "info: 已开启代理UDP"
+
+    if [ -f "${clash_pid_file}" ]; then
+        local pid=$(cat "${clash_pid_file}")
+        if grep -q "clash" "/proc/${pid}/cmdline" 2>/dev/null; then
+            log "info: 检测到clash已启动，此次不启动"
+            return 0
         fi
     fi
 
-    
-    if [ "${ipv6}" = "false" ] ; then
-        for net in /proc/sys/net/ipv6/conf/{wlan*,*data*} ; do
-            echo ${net} | grep -q wlan
-            if [ $? -eq 0 ] ; then
-                echo 0 > ${net}/accept_ra
-            fi
-            echo 1 > ${net}/disable_ipv6
-        done
+    if [ "${adguard}" == "true" ] && [ -f "${adguard_pid_file}" ]; then
+        local pid=$(cat "${adguard_pid_file}")
+        if grep -q "AdGuardHome" "/proc/${pid}/cmdline" 2>/dev/null; then
+            log "info: 检测到AdGuardHome已启动，此次不启动"
+            return 0
+        fi
+    fi
+
+    if [ "${clash_tproxy_port}" -eq 0 ] || [ -z "${clash_tproxy_port}" ]; then
+        [ "${clash_tun_status}" == "true" ] || {
+            log "err: tproxy和tun必须启用至少一个"
+            return 1
+        }
+    fi
+
+    if [ ! -f "${clash_bin_path}" ]; then
+        if [ "${clash_bin_name}" == "clashMeta" ]; then
+            log "err: 内核丢失，正在更新..."
+            "${script_dir}/clash.tool" -u || return 1
+        else
+            log "err: ${clash_bin_name}内核丢失"
+            return 1
+        fi
+    fi
+
+    mkdir -p "${clash_run_path}"
+    cp -f "${clash_config_file}" "${temporary_config_file}" || {
+        log "err: 配置文件复制失败"
+        return 1
+    }
+
+    chown "${clash_user_group}" "${clash_bin_path}" || log "warn: 无法设置clash权限"
+    chmod "${clash_permissions}" "${clash_bin_path}" || log "warn: 无法设置clash权限"
+    [ "${adguard}" == "true" ] && {
+        chown "${clash_user_group}" "${adguard_bin_path}" || log "warn: 无法设置AdGuard权限"
+        chmod "${clash_permissions}" "${adguard_bin_path}" || log "warn: 无法设置AdGuard权限"
+    }
+    chown "${clash_user_group}" "${temporary_config_file}"
+    chmod 0644 "${temporary_config_file}"
+
+    echo > "${clash_run_path}/root"
+    chmod 777 "${clash_run_path}/root"
+
+    if [ "${geo_auto_update}" != "true" ] && [ "${auto_update_geosite}" == "true" ]; then
+        echo "${update_geox_interval} ${script_dir}/clash.tool -u" >> "${clash_run_path}/root" &&
+        log "info: 自动更新GeoX定时已开启"
     else
-        for net in /proc/sys/net/ipv6/conf/{wlan*,*data*} ; do
-            echo ${net} | grep -q wlan
-            if [ $? -eq 0 ] ; then
-                echo 1 > ${net}/accept_ra
-            fi
-            echo 0 > ${net}/disable_ipv6
-        done
-        log "info: 已开启代理ipv6"
-    fi
-    
-    if [ "${udp}" = "true" ] ; then
-        log "info: 已开启代理udp"
+        log "info: 核心已开启自动更新GeoX，模块不进行操作"
     fi
 
-    pid=`cat ${Clash_pid_file} 2> /dev/null`
-    if (cat /proc/${pid}/cmdline | grep -q clash) ; then
-        log "info: 检测到clash已启动,此次不启动."
-        exit 1
-    fi
-    
-    if [ ${adguard} == "true" ];then
-        pid=`cat ${Adguard_pid_file} 2> /dev/null`
-        if (cat /proc/${pid}/cmdline | grep -q AdGuardHome) ; then
-            log "info: 检测到AdGuardHome已启动,此次不启动."
-            exit 1
-        fi
-    fi
-    
-    
-    if [ "${Clash_tproxy_port}" == 0 ] || [ "${Clash_tproxy_port}" == ""  ]; then
-        if [ "${Clash_tun_status}" != "true" ]; then
-            log "err: tproxy和tun得二选一."
-            exit 1
-        fi
-    fi
-    if [ -f "${Clash_bin_path}" ] ; then
-        mkdir -p ${Clash_run_path}
-        chown ${Clash_user_group} ${Clash_bin_path}
-        chmod ${Clash_permissions} ${Clash_bin_path}
-        if [ ${adguard} == "true" ];then
-            chown ${Clash_user_group} ${Adguard_bin_path}
-            chmod ${Clash_permissions} ${Adguard_bin_path}
-        fi
-        chown ${Clash_user_group} ${temporary_config_file}
-        chmod 0644 ${temporary_config_file}
-        rm -rf ${Clash_run_path}/root
-        touch ${Clash_run_path}/root
-        chmod 777 ${Clash_run_path}/root
-        if [ "${Geo_auto_update}" != "true" ];then
-            if [ "${auto_updateGeoSite}" == "true" ]; then
-                echo "${update_geoXInterval} ${scripts_dir}/clash.tool -u" >> ${Clash_run_path}/root \
-                && log "info: 自动更新GeoX定时已开启."
-            fi
-        else
-            log "info: 核心已开启自动更新GeoX 模块不进行操作."
-        fi
-        if [ "${auto_updateSubcript}" == "true" ]; then
-            echo "${update_subcriptInterval} ${scripts_dir}/clash.tool -s" >> ${Clash_run_path}/root \
-            && log "info: 自动更新订阅定时已开启."
-        fi
-        if [ "${auto_updateclashMeta}" == "true" ] || [ "${Geo_auto_update}" != "true" ]; then
-            echo "${update_geoXInterval} ${scripts_dir}/clash.tool -u" >> ${Clash_run_path}/root \
-            && log "info: 自动更新clashMeta内核定时已开启."
-        else
-            log "info: 自动更新clashMeta内核定时已开启."
-        fi
+    [ "${auto_update_subcript}" == "true" ] && {
+        echo "${update_subcript_interval} ${script_dir}/clash.tool -s" >> "${clash_run_path}/root" &&
+        log "info: 自动更新订阅定时已开启"
+    }
 
-        sed -i '/^[  ]*$/d' ${CFM_logs_file}
-        if [ "${filter_local}" = "true" ] ; then
-            com="${scripts_dir}/clash.tool -m ; sleep 10 ;${scripts_dir}/clash.tool -m ; sleep 10; ${scripts_dir}/clash.tool -m ;sleep 10; ${scripts_dir}/clash.tool -m;sleep 10;${scripts_dir}/clash.tool -m ; sleep 10;${scripts_dir}/clash.tool -m"
-            echo "*/1 * * * * ${com}" >> ${Clash_run_path}/root && log "info: 自动绕过本地ip段已打开."
-        fi
-    else
-        if [ ${Clash_bin_name} == "clashMeta" ];then
-            log "err: ${Clash_bin_name}内核丢失 正在更新..."
-            ${scripts_dir}/clash.tool -u
-            start_clash
+    [ "${auto_update_clash_meta}" == "true" ] || [ "${geo_auto_update}" != "true" ] && {
+        echo "${update_geox_interval} ${script_dir}/clash.tool -u" >> "${clash_run_path}/root" &&
+        log "info: 自动更新clashMeta内核定时已开启"
+    }
+
+    if [ "${filter_local}" == "true" ]; then
+        local cmd="${script_dir}/clash.tool -m"
+        for i in {1..6}; do cmd="${cmd} ; sleep 10 ; ${script_dir}/clash.tool -m"; done
+        echo "*/1 * * * * ${cmd}" >> "${clash_run_path}/root" &&
+        log "info: 自动绕过本地IP段已打开"
+    fi
+
+    if [ "${ml}" == "true" ]; then
+        if [ ! -f "${clash_run_path}/ip.dat" ]; then
+            log "info: 正在获取免流IP..."
+            baidumlip=$(ping -c 1 cloudnproxy.baidu.com | sed -n '1s/.*(\(.*\)).*/\1/p')
+            txmlip=$(ping -c 1 weixin.qq.com | sed -n '1s/.*(\(.*\)).*/\1/p')
+            echo "baidumlip=${baidumlip}\ntxmlip=${txmlip}" > "${clash_run_path}/ip.dat"
         else
-            log "err: ${Clash_bin_name}内核丢失."
+            log "info: 已从缓存文件中获取免流IP"
+            . "${clash_run_path}/ip.dat"
         fi
-        exit 1
+        log "info: 当前百度系免流IP:${baidumlip}"
+        log "info: 当前腾讯系免流IP:${txmlip}"
     fi
-    
-    if [ ${ml} == "true" ];then
-        if [ ! -f ${Clash_run_path}/ip.dat ];then
-            log "info: 正在获取免流ip..."
-            baidumlip=$(${busybox_path} ping -c 1 cloudnproxy.baidu.com | sed '1{s/[^(]*(//;s/).*//;q}')
-            txmlip=$(${busybox_path} ping -c 1 weixin.qq.com | sed '1{s/[^(]*(//;s/).*//;q}')
-            echo "baidumlip=${baidumlip}\ntxmlip=${txmlip}">${Clash_run_path}/ip.dat
+
+    if [ "${proxy_google}" == "true" ]; then
+        if [ ! -f "${clash_run_path}/Google.dat" ]; then
+            log "info: 正在获取Google系应用..."
+            echo > "${clash_run_path}/Google.dat"
+            pm list packages | awk -F: '{print $2}' | grep -E "google|com.android.vending" >> "${clash_run_path}/Google.dat"
+            pm list packages -s | awk -F: '{print $2}' | grep -E "google|com.android.vending" >> "${clash_run_path}/Google.dat"
         else
-            log "info: 已从缓存文件中获取免流ip"
-            . ${Clash_run_path}/ip.dat
+            log "info: 已从缓存文件中获取Google系应用"
         fi
     fi
-    if [ ${proxyGoogle} == "true" ];then
-        if [ ! -f ${Clash_run_path}/Google.dat ];then
-            log "info: 正在获取本机所有Google系app..."
-            echo "\n">${Clash_run_path}/Google.dat
-            for packages in $(pm list packages |awk -F : '{print$NF}')$(pm list packages -s |awk -F : '{print$NF}')
-            do
-                echo $packages | grep "google">>${Clash_run_path}/Google.dat
-                echo $packages | grep "com.android.vending">>${Clash_run_path}/Google.dat
-            done
-        else
-            log "info: 已从缓存文件中获取本机所有Google系app"
-        fi
+
+    if [ "${clash_tun_status}" == "true" ] && [ "${auto_config}" == "true" ] && [ "${auto_tun}" == "true" ]; then
+        edit_tun || return 1
     fi
-    if [ ${ml} == "true" ];then    
-        log "info: 当前百度系免流ip:${baidumlip}"
-        log "info: 当前腾讯系免流ip:${txmlip}"
+
+    [ "${ml}" == "true" ] && {
+        sed -i "s/百度系免流ip/${baidumlip}/g" "${temporary_config_file}"
+        sed -i "s/腾讯系免流ip/${txmlip}/g" "${temporary_config_file}"
+    }
+
+    [ ! -f "${clash_geoip_file}" ] && {
+        log "err: 缺少GeoIP资源文件，正在自动下载"
+        update_file "${clash_geoip_file}" "${geoip_url}" || return 1
+    }
+
+    [ ! -f "${clash_geosite_file}" ] && {
+        log "err: 缺少GeoSite资源文件，正在自动下载"
+        update_file "${clash_geosite_file}" "${geosite_url}" || return 1
+    }
+
+    local clasherror=$("${clash_bin_path}" -d "${clash_data_dir}" -f "${temporary_config_file}" -t 2>&1)
+    if [ $? -ne 0 ]; then
+        log "err: 配置有误，启动失败"
+        log "err: ${clasherror}"
+        return 1
     fi
-    
-    if [ "${Clash_tun_status}" == "true" ];then
-        if [ "${auto_config}" == "true" ] && [  "${auto_tun}" == "true" ];then
-            edit_tun
-        fi
+
+    if [ "${clash_tun_status}" == "true" ]; then
+        mkdir -p /dev/net
+        ln -sf /dev/tun /dev/net/tun
     fi
-    
-    if [ ${ml} == "true" ];then
-        sed -i "s/百度系免流ip/${baidumlip}/g" ${temporary_config_file}
-        sed -i "s/腾讯系免流ip/${txmlip}/g" ${temporary_config_file}
+
+    mv "${clash_run_path}/kernel.log" "${clash_run_path}/kernel.old.log"
+    ulimit -SHn 1000000
+
+    if [ "${adguard}" == "true" ]; then
+        nohup setuidgid "${clash_user_group}" "${adguard_bin_path}" -w "${clash_run_path}" -c "${adguard_config_file}" \
+            --pidfile "${adguard_pid_file}" -l "/data/clash/run/adg.log" >/dev/null 2>&1 &
     fi
-    if [ ! -f ${Clash_GeoIP_file} ];then
-        log "err: 缺少GeoIP资源文件 正在自动下载."
-        update_file ${Clash_GeoIP_file} ${GeoIP_url}
-    fi
-    if [ ! -f ${Clash_GeoSite_file} ];then
-        log "err: 缺少GeoSite资源文件 正在自动下载."
-        update_file ${Clash_GeoSite_file} ${GeoSite_url}
-    fi
-    clasherror=$(${Clash_bin_path} -d ${Clash_data_dir} -f ${temporary_config_file} -t)
-    if [ -f ${temporary_config_file} ]; then
-        if $(${Clash_bin_path} -d ${Clash_data_dir} -t -f ${temporary_config_file} > /dev/null) ; then
-            if [ "${Clash_tun_status}" == "true" ]; then
-                mkdir -p /dev/net
-                ln -sf /dev/tun /dev/net/tun
-            fi
-            mv /data/clash/run/kernel.log /data/clash/run/kernel.old.log
-            ulimit -SHn 1000000
-            if [ ${adguard} == "true" ];then
-                nohup ${busybox_path} setuidgid ${Clash_user_group} ${Adguard_bin_path} -w ${Clash_run_path} -c ${Adguard_config_file} --pidfile ${Adguard_pid_file} -l /data/clash/run/adg.log 2>&1 &
-            fi
-            nohup ${busybox_path} setuidgid ${Clash_user_group} ${Clash_bin_path} -d ${Clash_data_dir} -f ${temporary_config_file} > /data/clash/run/kernel.log 2>&1 &
-            echo "$(${busybox_path} pidof ${Clash_bin_path})">${Clash_pid_file}
-            cp -Rf /data/clash /data/clash.old
-            log "info: 代理模式:${mode}"
-            if [ ${adguard} == "true" ];then
-                log "info: adguard home已启动"
-            fi
-            log "info: ${Clash_bin_name}内核已启动."
-        else
-            log "err: 配置有误，启动失败."
-            log "err: 下面是错误日志"
-            log "err: ${clasherror}"
-            exit 1
+
+    nohup setuidgid "${clash_user_group}" "${clash_bin_path}" -d "${clash_data_dir}" \
+        -f "${temporary_config_file}" > "${clash_run_path}/kernel.log" 2>&1 &
+    echo "$!" > "${clash_pid_file}"
+
+    cp -Rf "/data/clash" "/data/clash.old"
+    log "info: 代理模式:${mode}"
+    [ "${adguard}" == "true" ] && log "info: adguard home已启动"
+    log "info: ${clash_bin_name}内核已启动"
+
+    # 端口检测
+    if [ "${clash_port_skipdetection}" == "false" ]; then
+        sleep "${wait_clash_start_time}"
+        if ! "${script_dir}/clash.tool" -p; then
+            kill -15 $(cat "${clash_pid_file}") 2>/dev/null
+            [ "${adguard}" == "true" ] && kill -15 $(cat "${adguard_pid_file}") 2>/dev/null
+            rm -f "${clash_pid_file}"
+            log "err: 端口未检测到，已停止服务"
+            return 1
         fi
     else
-        log "info: 配置文件合并失败."
-        exit 1
+        log "info: 已跳过端口检查"
     fi
 
-
-    if [ "${Clash_tun_status}" == "true" ]; then
-        return
-    fi
-    if [ "${Clash_port_skipdetection}" == "false" ]; then
-        sleep ${WaitClashStartTime}
-        if ! (${scripts_dir}/clash.tool -p) ; then
-            kill -15 `cat ${Clash_pid_file}`
-            log "err: 端口未检测到,已停止${Clash_bin_name}内核以及后续逻辑."
-            if [ ${adguard} == "true" ];then
-                kill -15 `cat ${Adguard_pid_file}`
-                log "err: 已停止adguard home内核."
-            fi
-            rm -rf ${Clash_pid_file}
-            exit 1
-        fi
-    else
-    log "info: 已跳过端口检查."
-    fi
+    return 0
 }
 
 stop_clash() {
-    kill -15 `cat ${Clash_pid_file}`
-    log "info: 已停止${Clash_bin_name}内核."
-    if [ ${adguard} == "true" ];then
-        kill -15 `cat ${Adguard_pid_file}`
-        log "info: 已停止adguard home内核."
-    fi
+    [ -f "${clash_pid_file}" ] && {
+        kill -15 $(cat "${clash_pid_file}") 2>/dev/null
+        rm -f "${clash_pid_file}"
+        log "info: 已停止${clash_bin_name}内核"
+    }
+
+    [ "${adguard}" == "true" ] && [ -f "${adguard_pid_file}" ] && {
+        kill -15 $(cat "${adguard_pid_file}") 2>/dev/null
+        rm -f "${adguard_pid_file}"
+        log "info: 已停止adguard home内核"
+    }
 }
 
-while getopts ":sk" signal ; do
-    case ${signal} in
-        s)
-            start_clash
-            ;;
-        k)
-            stop_clash
-            ;;
-        ?)
-            echo ""
-            ;;
-    esac
-done
+case "$1" in
+    -s) start_clash ;;
+    -k) stop_clash ;;
+    *) echo "Usage: $0 [-s|-k]" ;;
+esac
