@@ -22,5 +22,5 @@ fi
 crond -c ${Clash_run_path}
 chmod -R 6755 ${Clash_data_dir}/clashkernel
 if [ ${self_start} == "true" ] ; then
-    ohup ${scripts_dir}/clash.service -s && ${scripts_dir}/clash.iptables -s
+    nohup ${scripts_dir}/clash.service -s && ${scripts_dir}/clash.iptables -s
 fi
