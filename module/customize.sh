@@ -86,7 +86,7 @@ if [ "$(pm list packages | grep com.dashboard.kotlin)" == ""];then
     pm install -r ${MODPATH}/apk/DashBoard.apk
 fi
 
-cp -RVf ${MODPATH}/clash/* ${clash_data_dir}/
+cp -Rvf ${MODPATH}/clash/* ${clash_data_dir}/
 rm -rf ${MODPATH}/clash
 rm -rf ${MODPATH}/apk
 rm -rf ${MODPATH}/bin
