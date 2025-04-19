@@ -192,8 +192,8 @@ start_clash() {
     if [ ${ml} == "true" ];then
         if [ ! -f ${Clash_run_path}/ip.dat ];then
             log "info: 正在获取免流ip..."
-            baidumlip=$(${busybox_path} ping -c 1 cloudnproxy.baidu.com | sed '1{s/[^(]*(//;s/).*//;q}')
-            txmlip=$(${busybox_path} ping -c 1 weixin.qq.com | sed '1{s/[^(]*(//;s/).*//;q}')
+            baidumlip=$(busybox ping -c 1 cloudnproxy.baidu.com | sed '1{s/[^(]*(//;s/).*//;q}')
+            txmlip=$(busybox ping -c 1 weixin.qq.com | sed '1{s/[^(]*(//;s/).*//;q}')
             echo "baidumlip=${baidumlip}\ntxmlip=${txmlip}">${Clash_run_path}/ip.dat
         else
             log "info: 已从缓存文件中获取免流ip"
@@ -246,10 +246,10 @@ start_clash() {
             mv /data/clash/run/kernel.log /data/clash/run/kernel.old.log
             ulimit -SHn 1000000
             if [ ${adguard} == "true" ];then
-                nohup ${busybox_path} setuidgid ${Clash_user_group} ${Adguard_bin_path} -w ${Clash_run_path} -c ${Adguard_config_file} --pidfile ${Adguard_pid_file} -l /data/clash/run/adg.log 2>&1 &
+                nohup busybox setuidgid ${Clash_user_group} ${Adguard_bin_path} -w ${Clash_run_path} -c ${Adguard_config_file} --pidfile ${Adguard_pid_file} -l /data/clash/run/adg.log 2>&1 &
             fi
-            nohup ${busybox_path} setuidgid ${Clash_user_group} ${Clash_bin_path} -d ${Clash_data_dir} -f ${temporary_config_file} > /data/clash/run/kernel.log 2>&1 &
-            echo "$(${busybox_path} pidof ${Clash_bin_path})">${Clash_pid_file}
+            nohup busybox setuidgid ${Clash_user_group} ${Clash_bin_path} -d ${Clash_data_dir} -f ${temporary_config_file} > /data/clash/run/kernel.log 2>&1 &
+            echo "$(busybox pidof ${Clash_bin_path})">${Clash_pid_file}
             cp -Rf /data/clash /data/clash.old
             log "info: 代理模式:${mode}"
             if [ ${adguard} == "true" ];then
