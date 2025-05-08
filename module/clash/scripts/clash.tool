@@ -118,7 +118,7 @@ upgrade_clash() {
     unset specific_clash_filename
 
     if [ -f ${Clash_data_dir}/clashkernel/temp/clashMeta.gz ];then
-        ${busybox gunzip -f ${Clash_data_dir}/clashkernel/temp/clashMeta.gz
+        busybox gunzip -f ${Clash_data_dir}/clashkernel/temp/clashMeta.gz
         if [ -f ${Clash_data_dir}/clashkernel/temp/clashMeta ];then
             rm -f ${Clash_data_dir}/clashkernel/clashMeta
             mv ${Clash_data_dir}/clashkernel/temp/clashMeta ${Clash_data_dir}/clashkernel/
