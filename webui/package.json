@@ -17,7 +17,7 @@
     "@types/js-yaml": "^4.0.9",
     "js-yaml": "^4.1.0",
     "kernelsu": "^1.0.6",
-    "next": "14.2.26",
+    "next": "14.2.30",
     "react": "^18",
     "react-dom": "^18"
   },
